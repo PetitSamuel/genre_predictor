@@ -3,8 +3,8 @@ Get a Spotify API key at https://developer.spotify.com/documentation/web-api/qui
 
 Create a file called `.env` and add the following values:
 ```
-SPOTIPY_CLIENT_ID =<your client id>
-SPOTIPY_CLIENT_SECRET =<your client secret>
+SPOTIFY_CLIENT_ID =<your client id>
+SPOTIFY_CLIENT_SECRET =<your client secret>
 ```
 
 Install:
