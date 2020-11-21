@@ -4,13 +4,12 @@ import json
 import spotipy.util as util
 from spotipy.oauth2 import SpotifyClientCredentials
 from spotipy.oauth2 import SpotifyOAuth
+from decouple import config
+
+SPOTIFY_CLIENT_ID = config('SPOTIFY_CLIENT_ID')
+SPOTIFY_CLIENT_SECRET = config('SPOTIFY_CLIENT_SECRET')
 
 scope = 'user-library-read'
-# Should probably get your own client_id so we're not eating into each others rate limits
-# look at https://developer.spotify.com/documentation/web-api/quick-start/
-SPOTIPY_CLIENT_ID = '3f137784ee774084b5f10cf1805e057b'
-SPOTIPY_CLIENT_SECRET = '61aefb1d48bc4391a11ee7e5c2d8b29b'
-
 
 def show_tracks(results):
     for i, item in enumerate(results['items']):
@@ -151,12 +150,9 @@ def get_artist_genres(a_id):
 
 
 if __name__ == '__main__':
-    # Sets up access keys basically
-    # Should probably get your own client_id so we're not eating into each others rate limits
-    # look at https://developer.spotify.com/documentation/web-api/quick-start/
     client_credentials_manager = SpotifyClientCredentials(
-        client_id=SPOTIPY_CLIENT_ID,
-        client_secret=SPOTIPY_CLIENT_SECRET)
+        client_id=SPOTIFY_CLIENT_ID,
+        client_secret=SPOTIFY_CLIENT_SECRET)
 
     sp = spotipy.Spotify(client_credentials_manager=client_credentials_manager)
 
@@ -169,6 +165,7 @@ if __name__ == '__main__':
     # Run through of one track
 
     # Gets artist and tracks IDs
+
     tracks, artists = get_track_artist_ids_from_playlist(small_pl_id)
 
     # get track features of max 100 tracks
@@ -181,3 +178,4 @@ if __name__ == '__main__':
     json_data = json.dumps(data)
 
     pp_json(json_data)
+
