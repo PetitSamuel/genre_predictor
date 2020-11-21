@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="TerminalProjectOptionsProvider">
+    <envs>
+      <env key="SPOTIPY_CLIENT_ID" value="3f137784ee774084b5f10cf1805e057b" />
+      <env key="SPOTIPY_CLIENT_SECRET" value="61aefb1d48bc4391a11ee7e5c2d8b29b" />
+    </envs>
+  </component>
+</project>
