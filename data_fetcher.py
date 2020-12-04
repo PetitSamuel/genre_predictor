@@ -1,6 +1,7 @@
 import time
 import spotipy
 import json
+from more_itertools import unique_everseen
 import spotipy.util as util
 from spotipy.oauth2 import SpotifyClientCredentials
 from spotipy.oauth2 import SpotifyOAuth
@@ -81,10 +82,14 @@ def get_audio_features(tracks):
     return features
 
 
-# example Foals genres are
+# Foals
 # ['alternative dance', 'indie rock', 'modern alternative rock', 'modern rock', 'new rave', 'oxford indie', 'rock']
-# Returns unique subtokens
-# ['alternative', 'dance', 'indie', 'rock', 'modern', 'new', 'rave', 'oxford']
+# ['alternative'x2, 'dance'x1, 'indie'x2, 'rock'x4, 'modern'x2, 'new'x1, 'rave'x1, 'oxford'x1]
+# ['rock', 'alternative', 'indie', 'modern', 'dance', 'new', 'rave', 'oxford']
+
+# Change so we keep track of how many "rock"s we see and order based on that
+# So Foals should be
+# ['rock', 'indie', ...]
 def tokenize_genres(genres):
     genre_tokens = []
     for g in genres:
@@ -92,15 +97,30 @@ def tokenize_genres(genres):
             hyphen_split = g.split("-")
             g = tokenize_genres(hyphen_split)
             for subg in g:
-                if subg not in genre_tokens:
-                    genre_tokens.append(subg)
+                # if subg not in genre_tokens:
+                genre_tokens.append(subg)
         else:
             space_split = g.split()
             for subg in space_split:
-                if subg not in genre_tokens:
-                    genre_tokens.append(subg)
+                # if subg not in genre_tokens:
+                genre_tokens.append(subg)
 
-    return genre_tokens
+    if genre_tokens == []:
+        return []
+
+    return order_genre_list(genre_tokens)
+
+
+# Takes a full list of genre subtokens
+# Orders by frequency and returns unique list
+def order_genre_list(lst):
+    from collections import Counter
+    counts = Counter(lst)
+    if max(counts.values()) != 1:
+        lst = sorted(lst, key=lambda x: (counts[x], x), reverse=True)
+    lst = list(unique_everseen(lst))
+
+    return lst
 
 
 # parses spotify's genres and returns genres from BASE_GENRES
@@ -108,9 +128,9 @@ def analyse_genres(genres):
     genre_tokens = tokenize_genres(genres)
 
     artist_base_genres = []
-    for bg in BASE_GENRES:
-        if bg in genre_tokens:
-            artist_base_genres.append(bg)
+    for genre in genre_tokens:
+        if genre in BASE_GENRES:
+            artist_base_genres.append(genre)
 
     return artist_base_genres
 
@@ -194,7 +214,7 @@ if __name__ == '__main__':
     # Gets artists and tracks IDs
     all_tracks = []
     all_artists = []
-    for playlist_id in single_playlist:
+    for playlist_id in all_playlists:
         tracks, artists = get_track_artist_ids_from_playlist(playlist_id)
         all_tracks = all_tracks + tracks
         all_artists = all_artists + artists
@@ -215,7 +235,7 @@ if __name__ == '__main__':
 
     print("Merging data...")
 
-    # Merge both track features and genres
+    # # Merge both track features and genres
     merged_data = merge_tracks_genres(all_audio_features)
 
     print("Writing output to file...")
