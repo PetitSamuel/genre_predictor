@@ -61,12 +61,13 @@ def get_track_artist_ids_from_playlist(pl_uri):
         if len(response['items']) == 0:
             break
         for t in response['items']:
-            t_id = t['track']['id']
-            a_id = t['track']['artists'][0]['id']
-            if (t_id and a_id):
-                track_ids.append(t_id)
-                artist_ids.append(a_id)
-                track_to_artist_map[t_id] = a_id
+            if t['track'] is not None:
+                t_id = t['track']['id']
+                a_id = t['track']['artists'][0]['id']
+                if t_id and a_id:
+                    track_ids.append(t_id)
+                    artist_ids.append(a_id)
+                    track_to_artist_map[t_id] = a_id
         offset = offset + len(response['items'])
         # print(offset, "/", response['total'])
 
@@ -202,6 +203,30 @@ if __name__ == '__main__':
     folk = 'spotify:playlist:37i9dQZF1DX6z20IXmBjWI'
     large_pl_id_2 = 'spotify:playlist:4lJjt8XIq6zYphoMjNJIb4'
 
+    # from everynoise.com ('tso' = the sound of...)
+    tso_pop = 'spotify:playlist:6gS3HhOiI17QNojjPuPzqc'
+    tso_rock = 'spotify:playlist:7dowgSWOmvdpwNkGFMUs6e'
+    tso_rap = 'spotify:playlist:6s5MoZzR70Qef7x4bVxDO1'
+    tso_dance_pop = 'spotify:playlist:2ZIRxkFuqNPMnlY7vL54uK' #nothing for just dance
+    tso_hiphop = 'spotify:playlist:6MXkE0uYF4XwU4VTtyrpfP'
+    tso_trap = 'spotify:playlist:60SHtDyagDjPnUpC7x1UD9'
+    tso_rnb = 'spotify:playlist:1rLnwJimWCmjp3f0mEbnkY'
+    tso_metal = 'spotify:playlist:3pBfUFu8MkyiCYyZe849Ks'
+    tso_country = 'spotify:playlist:0VZfpqcbBUWC6kpP1vVrvA'
+    tso_indietronica = 'spotify:playlist:0yqVOsxA2U4P260ad60QuU'
+    tso_folk = 'spotify:playlist:4JuKjgd76AZn2fUaeXNCuo'
+    # alternative + whatever we're missing
+    tso_alternative_dance = 'spotify:playlist:5LwcdWTCx2JoWeVVWOYsGj'
+    tso_punk = 'spotify:playlist:17qQT0G3yFjOJ02wWZaNCw'
+    tso_electronica = 'spotify:playlist:6I0NsYzfoj7yHXyvkZYoRx'
+    tso_chamber_psych = 'spotify:playlist:6rirvdbul7rDunT5SP5F4m'
+
+    all_tso = [
+        tso_pop,tso_rock,tso_rap,tso_dance_pop,tso_hiphop,tso_trap,tso_rnb,tso_metal,
+        tso_country,tso_indietronica,tso_folk,tso_punk,tso_electronica,tso_chamber_psych,
+        tso_alternative_dance
+    ]
+
     # Array of playlists IDs to fetch
     all_playlists = [
         small_pl_id, large_pl_id, large_pl_id_2, irish_top_50, folk
@@ -214,7 +239,7 @@ if __name__ == '__main__':
     # Gets artists and tracks IDs
     all_tracks = []
     all_artists = []
-    for playlist_id in all_playlists:
+    for playlist_id in all_tso:
         tracks, artists = get_track_artist_ids_from_playlist(playlist_id)
         all_tracks = all_tracks + tracks
         all_artists = all_artists + artists
