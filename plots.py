@@ -4,13 +4,14 @@ import json
 import collections
 
 if __name__ == '__main__':
-    with open("data/2k_songs_sample_dataset.json") as f:
+    # with open("data/2k_songs_sample_dataset.json") as f:
+    with open("data/11k_songs_tso_dataset.json") as f:
         data = json.load(f)
 
     all_artist_genres = []
     for i in data:
-        list_genres = i['genres']
-        for g in list_genres[:2]:   # max first 2 genres of an artist
+        list_genres = i['genres'][:2]
+        for g in list_genres:   # max first 2 genres of an artist
             all_artist_genres.append(g)
 
     counts = collections.Counter(all_artist_genres)
