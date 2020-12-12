@@ -1,5 +1,23 @@
 import json
 
+BASE_GENRES = [
+    "pop",
+    "rock",
+    "rap",
+    "dance",
+    "hip",  # hip hop (catches "hip pop")
+    "trap",
+    "r&b",
+    "metal",
+    "country",
+    "indie",
+    "folk",
+    "alternative",
+    "punk",
+    "electro",  # catches 'electronica', 'electro house',...
+    "psych"
+]
+
 def show_tracks(results):
     for i, item in enumerate(results['items']):
         track = item['track']

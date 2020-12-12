@@ -6,30 +6,12 @@ import spotipy.util as util
 from spotipy.oauth2 import SpotifyClientCredentials
 from spotipy.oauth2 import SpotifyOAuth
 from decouple import config
-from util import pp_json
+from util import pp_json, BASE_GENRES
 
 SPOTIFY_CLIENT_ID = config('SPOTIFY_CLIENT_ID')
 SPOTIFY_CLIENT_SECRET = config('SPOTIFY_CLIENT_SECRET')
 
 scope = 'user-library-read'
-
-BASE_GENRES = [
-    "pop",
-    "rock",
-    "rap",
-    "dance",
-    "hip",  # hip hop (catches "hip pop")
-    "trap",
-    "r&b",
-    "metal",
-    "country",
-    "indie",
-    "folk",
-    "alternative",
-    "punk",
-    "electro", # catches 'electronica', 'electro house',...
-    "psych"
-]
 
 # artist_genre_map = {
 #     "5INjqkS1o8h1imAzPqGZBb": {
@@ -260,7 +242,7 @@ if __name__ == '__main__':
 
     print("Merging data...")
 
-    # # Merge both track features and genres
+    # Merge both track features and genres
     merged_data = merge_tracks_genres(all_audio_features)
 
     print("Writing output to file...")
