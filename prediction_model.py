@@ -6,6 +6,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
+import matplotlib.pyplot as plt
 
 
 # Slightly simplified the problem to just picking the most likely genre given a set of features
@@ -43,16 +44,30 @@ def main():
 
     # train and test each model - accuracy %
     # knn(x, y)               # 40%
-    # decision_tree(x,y)      # 56%
-    # random_forest(x, y)     # 61%
-    baseline(x,y)           # 25%
+    # decision_tree(x, y)  # 56%
+    random_forest(x, y)     # 61%
+    # baseline(x,y)           # 25%
+    # logistic_reg(x,y.ravel()) # 40%
+
+
+def logistic_reg(x, y):
+    from sklearn.model_selection import train_test_split
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
+
+    from sklearn.linear_model import LogisticRegression
+    clf_lr = LogisticRegression(multi_class='ovr', solver='liblinear')
+    clf_lr.fit(x_train, y_train)
+
+    print(clf_lr.score(x_test, y_test))
+
+    show_confusion_matrix(clf_lr, x_test, y_test)
 
 
 # baseline - most frequent - "pop"
-def baseline(x,y):
+def baseline(x, y):
     from sklearn.dummy import DummyClassifier
     dummy = DummyClassifier(strategy='most_frequent')
-    dummy.fit(x,y)
+    dummy.fit(x, y)
 
     y_pred = dummy.predict(x)
 
@@ -88,6 +103,8 @@ def knn(x, y):
     from sklearn.metrics import classification_report
     print(classification_report(y_pred, y_test))
 
+    show_confusion_matrix(clf_knn, x_test, y_test)
+
 
 # random forest classifier
 # n_estimators chosen through cross validation - takes a while
@@ -115,6 +132,8 @@ def random_forest(x, y):
     from sklearn.metrics import classification_report
     print(classification_report(y_pred, y_test))
 
+    show_confusion_matrix(clf_rf, x_test, y_test)
+
 
 # haven't looked at hyperparameters for this yet
 def decision_tree(x, y):
@@ -128,6 +147,18 @@ def decision_tree(x, y):
 
     from sklearn.metrics import classification_report
     print(classification_report(y_pred, y_test))
+
+    show_confusion_matrix(clf_dt, x_test, y_test)
+
+
+def show_confusion_matrix(clf, x, y):
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.set_title('Confusion Matrx')
+
+    from sklearn.metrics import plot_confusion_matrix
+    plot_confusion_matrix(clf, x, y, ax=ax)
+    plt.xticks(rotation=35)
+    plt.show()
 
 
 main()
