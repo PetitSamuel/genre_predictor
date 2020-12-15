@@ -41,12 +41,28 @@ def main():
     y = np.array(y)
     x = np.array(x)
 
-    # train and test each model
-    # knn(x, y)           # 40%
-    # decision_tree(x,y)  # 56%
-    random_forest(x, y)  # 61%
+    # train and test each model - accuracy %
+    # knn(x, y)               # 40%
+    # decision_tree(x,y)      # 56%
+    # random_forest(x, y)     # 61%
+    baseline(x,y)           # 25%
 
 
+# baseline - most frequent - "pop"
+def baseline(x,y):
+    from sklearn.dummy import DummyClassifier
+    dummy = DummyClassifier(strategy='most_frequent')
+    dummy.fit(x,y)
+
+    y_pred = dummy.predict(x)
+
+    from sklearn.metrics import classification_report
+    print(classification_report(y_pred, y))
+
+
+# knn network - number of neighbours cross validated
+# though non deterministic number chosen each time
+# with no real change in accuracy results
 def knn(x, y):
     from sklearn.model_selection import train_test_split
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
@@ -73,6 +89,9 @@ def knn(x, y):
     print(classification_report(y_pred, y_test))
 
 
+# random forest classifier
+# n_estimators chosen through cross validation - takes a while
+# so left at 200
 def random_forest(x, y):
     from sklearn.model_selection import train_test_split
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
