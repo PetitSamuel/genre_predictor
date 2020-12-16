@@ -58,10 +58,11 @@ def main():
     # logistic_reg(x,y.ravel()) # 40%
     # lr_cv_q(x, y)
     # lr_cv_C(x,y)
-    # knn_cv_n_neighbours(x,y,[1,3,5])
-    # knn_cv_gamma(x,y,[0.001,0.1,1]) # 52%
+    # knn_cv_n_neighbours(x,y,[1,2,3]) # k = 1
+    # knn_cv_gamma(x,y,[0.1, 1, 10, 100]) # with k=1 gaussian kernel doesn't have much effect
+    # about 55%
 
-    knn_hold_out(x_train,y_train,x_hold_out,y_hold_out)
+    knn_hold_out(x_train, y_train, x_hold_out, y_hold_out)
 
 
 def lr_cv_q(x, y):
@@ -175,7 +176,6 @@ def knn_cv_n_neighbours(x, y, neighbours):
     for neighbour in neighbours:
         # kernel = create_gaussian_kernel(gamma)
         from sklearn.neighbors import KNeighborsClassifier
-        # num_neighbours = int(len(x) * 0.8)
         model = KNeighborsClassifier(n_neighbors=neighbour)
 
         temp = []
@@ -203,20 +203,23 @@ def knn_cv_gamma(x, y, gammas):
     for g in gammas:
         kernel = create_gaussian_kernel(g)
         from sklearn.neighbors import KNeighborsClassifier
-        # num_neighbours = int(len(x) * 0.8)
         model = KNeighborsClassifier(n_neighbors=1, weights=kernel)
 
         temp = []
         from sklearn.model_selection import KFold
-        kf = KFold(n_splits=10)
+        kf = KFold(n_splits=5)
         for train, test in kf.split(x):
             model.fit(x[train], y[train])
 
             score = model.score(x[test], y[test])
             print(score)
             temp.append(score)
+        print(np.array(temp))
+        print("mean ", np.array(temp).mean())
         mean_error.append(np.array(temp).mean())
         std_error.append(np.array(temp).std())
+    print(mean_error)
+    print(std_error)
     plt.errorbar(gammas, mean_error, yerr=std_error)
     plt.title("gamma vs Mean Accuracy with standard error")
     plt.xlabel("gamma")
@@ -224,11 +227,11 @@ def knn_cv_gamma(x, y, gammas):
     plt.show()
 
 
-def knn_hold_out(x,y,x_hold,y_hold):
+def knn_hold_out(x, y, x_hold, y_hold):
     from sklearn.neighbors import KNeighborsClassifier
-    model = KNeighborsClassifier(n_neighbors=1)
-    model.fit(x,y)
-    print("hold-out score", model.score(x_hold,y_hold))
+    model = KNeighborsClassifier(n_neighbors=1, weights="uniform")
+    model.fit(x, y.ravel())
+    print("hold-out score", model.score(x_hold, y_hold))
 
 
 # knn network - number of neighbours cross validated
