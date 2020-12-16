@@ -81,7 +81,7 @@ def lr_cv_q(x, y):
         temp = []
 
         from sklearn.model_selection import KFold
-        kf = KFold(n_splits=5)
+        kf = KFold(n_splits=10)
         for train, test in kf.split(xpoly):
             model.fit(xpoly[train], y[train].ravel())
 
@@ -108,7 +108,7 @@ def lr_cv_C(x, y):
         plotted = False
 
         from sklearn.model_selection import KFold
-        kf = KFold(n_splits=5)
+        kf = KFold(n_splits=10)
         for train, test in kf.split(x):
             model.fit(x[train], y[train])
 
@@ -180,7 +180,7 @@ def knn_cv_n_neighbours(x, y, neighbours):
 
         temp = []
         from sklearn.model_selection import KFold
-        kf = KFold(n_splits=5)
+        kf = KFold(n_splits=10)
         for train, test in kf.split(x):
             model.fit(x[train], y[train])
 
@@ -207,7 +207,7 @@ def knn_cv_gamma(x, y, gammas):
 
         temp = []
         from sklearn.model_selection import KFold
-        kf = KFold(n_splits=5)
+        kf = KFold(n_splits=10)
         for train, test in kf.split(x):
             model.fit(x[train], y[train])
 
