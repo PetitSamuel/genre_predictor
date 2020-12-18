@@ -15,7 +15,7 @@ pip install -r requirements.txt
 Then run and it should work
 
 
-TODO:
+## TODO
 [x] Query songs form a provided playlist ID    
 [x] Query audio features from a song id    
 [x] Query artist genre from an artist id    
