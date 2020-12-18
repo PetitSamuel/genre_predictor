@@ -6,7 +6,10 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import GridSearchCV
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.linear_model import LogisticRegression
+from sklearn.multiclass import OneVsRestClassifier
 import matplotlib.pyplot as plt
+from util import BASE_GENRES
 
 
 # Slightly simplified the problem to just picking the most likely genre given a set of features
@@ -14,8 +17,103 @@ import matplotlib.pyplot as plt
 def main():
     with open('./data/11k_songs_tso_dataset.json') as f:
         data = json.load(f)
-    print(data[0])
+    # for single output models
+    # x_train,y_train,x_hold_out,y_hold_out = parse_data_single_output(data)
 
+    # for multi output models
+    max_genres = 2
+    x_train, y_train, x_hold_out, y_hold_out = parse_data_multi_output(data, max_genres)
+
+    # train and test each model - accuracy %
+    # knn(x, y)               # 40%
+    # decision_tree(x, y)  # 56%
+    # random_forest(x, y)     # 61+%
+    # baseline(x,y)           # 25%
+    # logistic_reg(x,y.ravel()) # 40%
+    # lr_cv_q(x, y)
+    # lr_cv_C(x,y)
+    # knn_cv_n_neighbours(x,y,[1,2,3]) # k = 1
+    # knn_cv_gamma(x,y,[0.1, 1, 10, 100]) # with k=1 gaussian kernel doesn't have much effect
+    # about 55%
+
+    # knn_hold_out(x_train, y_train, x_hold_out, y_hold_out)
+
+    best_model = chain_classifiers(x_train, y_train)
+    chain_of_classifiers_hold_out(x_hold_out, y_hold_out, best_model, max_genres)
+
+
+# print a few predictions on the held out dataset
+def chain_of_classifiers_hold_out(x, y, model, max_genres):
+    preds = model.predict(x)
+    for i in range(50):
+        print("Input", true_false_to_genres(x[i])[:max_genres])
+        print("Pred", true_false_to_genres(preds[i]))
+        print()
+
+
+# convert True/False array to Genres
+def true_false_to_genres(tf_arr):
+    genres = []
+    for i in range(len(tf_arr)):
+        if tf_arr[i]:
+            genres.append(BASE_GENRES[i])
+    return genres
+
+
+# Map array of genres to True/False values for multi output models
+def map_true_false(y):
+    mapped_y = []
+    for curr_song_genres in y:
+        song_list = []
+        for g in BASE_GENRES:
+            if g in curr_song_genres:
+                song_list.append(True)
+            else:
+                song_list.append(False)
+        mapped_y.append(song_list)
+    return mapped_y
+
+
+# max = max labels per datum
+def parse_data_multi_output(data, max):
+    x = []
+    y = []
+    for i in range(len(data)):
+        if not data[i]['genres']:
+            continue
+        else:
+            labels = data[i]['genres'][:max]
+
+        if labels[0] in ['electro']:
+            continue
+
+        features = [
+            data[i]['danceability'],
+            data[i]['energy'],
+            data[i]['speechiness'],
+            data[i]['acousticness'],
+            data[i]['instrumentalness'],
+            data[i]['liveness'],
+            data[i]['valence'],
+        ]
+        x.append(features)
+        y.append(labels)
+
+    x = np.array(x)
+    y = map_true_false(y)
+    y = np.array(y)
+
+    from sklearn.utils import shuffle
+    x, y = shuffle(x, y)
+    x_train = x[:10000]
+    y_train = y[:10000]
+    x_hold_out = x[10000:]
+    y_hold_out = y[10000:]
+
+    return x_train, y_train, x_hold_out, y_hold_out
+
+
+def parse_data_single_output(data):
     # Splitting data into inputs and labels
     x = []
     y = []
@@ -26,6 +124,10 @@ def main():
             labels = data[i]['genres']
         else:
             labels = data[i]['genres'][:1]
+
+        if labels[0] in ['electro']:
+            print("skipping electro")
+            continue
 
         features = [
             data[i]['danceability'],
@@ -48,21 +150,77 @@ def main():
     y_train = y[:10000]
     x_hold_out = x[10000:]
     y_hold_out = y[10000:]
-    print(len(x_hold_out))
 
-    # train and test each model - accuracy %
-    # knn(x, y)               # 40%
-    # decision_tree(x, y)  # 56%
-    # random_forest(x, y)     # 61+%
-    # baseline(x,y)           # 25%
-    # logistic_reg(x,y.ravel()) # 40%
-    # lr_cv_q(x, y)
-    # lr_cv_C(x,y)
-    # knn_cv_n_neighbours(x,y,[1,2,3]) # k = 1
-    # knn_cv_gamma(x,y,[0.1, 1, 10, 100]) # with k=1 gaussian kernel doesn't have much effect
-    # about 55%
+    return x_train, y_train, x_hold_out, y_hold_out
 
-    knn_hold_out(x_train, y_train, x_hold_out, y_hold_out)
+
+# chain of classifers example from
+# https://scikit-learn.org/stable/auto_examples/multioutput/plot_classifier_chain_yeast.html#sphx-glr-auto-examples-multioutput-plot-classifier-chain-yeast-py
+def chain_classifiers(x, y):
+    from sklearn.model_selection import train_test_split
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
+
+    base_lr = LogisticRegression()
+    ovr = OneVsRestClassifier(base_lr)
+    ovr.fit(x_train, y_train)
+    y_pred_ovr = ovr.predict(x_test)
+
+    from sklearn.metrics import jaccard_score
+    ovr_jaccard_score = jaccard_score(y_test, y_pred_ovr, average='samples')
+
+    from sklearn.multioutput import ClassifierChain
+    chains = [ClassifierChain(base_lr, order='random', random_state=i)
+              for i in range(10)]
+
+    for chain in chains:
+        chain.fit(x_train, y_train)
+
+    y_pred_chains = np.array([chain.predict(x_test) for chain in
+                              chains])
+    chain_jaccard_scores = [jaccard_score(y_test, y_pred_chain >= 0.5,
+                                          average='samples')
+                            for y_pred_chain in y_pred_chains]
+
+    y_pred_ensemble = y_pred_chains.mean(axis=0)
+    ensemble_jaccard_score = jaccard_score(y_test,
+                                           y_pred_ensemble >= 0.5,
+                                           average='samples')
+
+    model_scores = [ovr_jaccard_score] + chain_jaccard_scores
+    model_scores.append(ensemble_jaccard_score)
+
+    model_names = ('Independent',
+                   'Chain 1',
+                   'Chain 2',
+                   'Chain 3',
+                   'Chain 4',
+                   'Chain 5',
+                   'Chain 6',
+                   'Chain 7',
+                   'Chain 8',
+                   'Chain 9',
+                   'Chain 10',
+                   'Ensemble')
+
+    x_pos = np.arange(len(model_names))
+
+    # Plot the Jaccard similarity scores for the independent model, each of the
+    # chains, and the ensemble (note that the vertical axis on this plot does
+    # not begin at 0).
+
+    fig, ax = plt.subplots(figsize=(7, 4))
+    ax.grid(True)
+    ax.set_title('Classifier Chain Ensemble Performance Comparison')
+    ax.set_xticks(x_pos)
+    ax.set_xticklabels(model_names, rotation='vertical')
+    ax.set_ylabel('Jaccard Similarity Score')
+    ax.set_ylim([min(model_scores) * .9, max(model_scores) * 1.1])
+    colors = ['r'] + ['b'] * len(chain_jaccard_scores) + ['g']
+    ax.bar(x_pos, model_scores, alpha=0.5, color=colors)
+    plt.tight_layout()
+    plt.show()
+
+    return chains[-1]
 
 
 def lr_cv_q(x, y):
