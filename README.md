@@ -1,19 +1,21 @@
 # Genre Predictor
-Get a Spotify API key at https://developer.spotify.com/documentation/web-api/quick-start/
 
-Create a file called `.env` and add the following values:
-```
-SPOTIFY_CLIENT_ID =<your client id>
-SPOTIFY_CLIENT_SECRET =<your client secret>
-```
+## Set Up
 
-Install:
+### Spotify
+
+1. Get a Spotify API key at https://developer.spotify.com/documentation/web-api/quick-start/
+2. Create a file called `.env` and add the following values:
+    ```
+    SPOTIFY_CLIENT_ID=<your_client_id>
+    SPOTIFY_CLIENT_SECRET=<your_client_secret>
+    ```
+
+### Installation
+
 ```
 pip install -r requirements.txt 
 ```
-
-Then run and it should work
-
 
 ## TODO   
 - [x] Query songs form a provided playlist ID    
