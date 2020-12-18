@@ -2,7 +2,7 @@
 
 ## Set Up
 
-### Spotify
+### Spotify API Access
 
 1. Get a Spotify API key at https://developer.spotify.com/documentation/web-api/quick-start/
 2. Create a file called `.env` and add the following values:
@@ -11,7 +11,7 @@
     SPOTIFY_CLIENT_SECRET=<your_client_secret>
     ```
 
-### Installation
+### Dependency Installation
 
 ```
 pip install -r requirements.txt 
