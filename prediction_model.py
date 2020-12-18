@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 import json
+
+from sklearn.metrics import roc_auc_score, confusion_matrix
 from sklearn.pipeline import Pipeline
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import GridSearchCV
@@ -38,8 +40,10 @@ def main():
 
     # knn_hold_out(x_train, y_train, x_hold_out, y_hold_out)
 
-    best_model = chain_classifiers(x_train, y_train)
-    chain_of_classifiers_hold_out(x_hold_out, y_hold_out, best_model, max_genres)
+    # best_model = chain_classifiers(x_train, y_train)
+    # chain_of_classifiers_hold_out(x_hold_out, y_hold_out, best_model, max_genres)
+
+    knn_multi_output(x_train,y_train)
 
 
 # print a few predictions on the held out dataset
@@ -325,6 +329,33 @@ def create_gaussian_kernel(gamma):
         return weights / np.sum(weights)
 
     return g
+
+
+def knn_multi_output(x,y):
+
+    from sklearn.model_selection import train_test_split
+    x_train, x_test, y_train, y_test = train_test_split(x,y, test_size=0.2)
+
+    from sklearn.multioutput import MultiOutputClassifier
+    clf = MultiOutputClassifier(KNeighborsClassifier(n_neighbors=1)).fit(x_train,y_train)
+    y_pred = clf.predict(x_test)
+
+    for i in range(len(x_test)):
+        print("Actual: ", true_false_to_genres(y_test[i]))
+        print("Pred: ", true_false_to_genres(y_pred[i]))
+        print()
+
+    for i in range(len(BASE_GENRES)):
+        auc = roc_auc_score(y_test[:, i], y_pred[:,i])
+        print("AUC %s: %.4f" %(BASE_GENRES[i], auc))
+
+
+    # cm_y1 = confusion_matrix(y_test[:, 0], y_pred[:, 0])
+    # cm_y2 = confusion_matrix(y_test[:, 1], y_pred[:, 1])
+
+    # print(cm_y1)
+    # print(cm_y2)
+
 
 
 def knn_cv_n_neighbours(x, y, neighbours):
