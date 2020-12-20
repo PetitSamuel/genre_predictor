@@ -11,7 +11,7 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.multiclass import OneVsRestClassifier
 import matplotlib.pyplot as plt
-from util import BASE_GENRES
+from util import BASE_GENRES, parse_data_multi_output, parse_data_single_output
 
 
 # Slightly simplified the problem to just picking the most likely genre given a set of features
@@ -64,103 +64,10 @@ def true_false_to_genres(tf_arr):
             genres.append(BASE_GENRES[i])
     return genres
 
-
-# Map array of genres to True/False values for multi output models
-def map_true_false(y):
-    mapped_y = []
-    for curr_song_genres in y:
-        song_list = []
-        for g in BASE_GENRES:
-            if g in curr_song_genres:
-                song_list.append(True)
-            else:
-                song_list.append(False)
-        mapped_y.append(song_list)
-    return mapped_y
-
-
-# max = max labels per datum
-def parse_data_multi_output(data, max):
-    x = []
-    y = []
-    for i in range(len(data)):
-        if not data[i]['genres']:
-            continue
-        else:
-            labels = data[i]['genres'][:max]
-
-        if labels[0] in ['electro']:
-            continue
-
-        features = [
-            data[i]['danceability'],
-            data[i]['energy'],
-            data[i]['speechiness'],
-            data[i]['acousticness'],
-            data[i]['instrumentalness'],
-            data[i]['liveness'],
-            data[i]['valence'],
-        ]
-        x.append(features)
-        y.append(labels)
-
-    x = np.array(x)
-    y = map_true_false(y)
-    y = np.array(y)
-
-    from sklearn.utils import shuffle
-    x, y = shuffle(x, y)
-    x_train = x[:10000]
-    y_train = y[:10000]
-    x_hold_out = x[10000:]
-    y_hold_out = y[10000:]
-
-    return x_train, y_train, x_hold_out, y_hold_out
-
-
-def parse_data_single_output(data):
-    # Splitting data into inputs and labels
-    x = []
-    y = []
-    for i in range(len(data)):
-        if not data[i]['genres']:
-            continue
-        if len(data[i]['genres']) == 1:
-            labels = data[i]['genres']
-        else:
-            labels = data[i]['genres'][:1]
-
-        if labels[0] in ['electro']:
-            print("skipping electro")
-            continue
-
-        features = [
-            data[i]['danceability'],
-            data[i]['energy'],
-            data[i]['speechiness'],
-            data[i]['acousticness'],
-            data[i]['instrumentalness'],
-            data[i]['liveness'],
-            data[i]['valence'],
-        ]
-        x.append(features)
-        y.append(labels)
-
-    y = np.array(y)
-    x = np.array(x)
-
-    from sklearn.utils import shuffle
-    x, y = shuffle(x, y)
-    x_train = x[:10000]
-    y_train = y[:10000]
-    x_hold_out = x[10000:]
-    y_hold_out = y[10000:]
-
-    return x_train, y_train, x_hold_out, y_hold_out
-
-
 # chain of classifers example from
 # https://scikit-learn.org/stable/auto_examples/multioutput/plot_classifier_chain_yeast.html#sphx-glr-auto-examples-multioutput-plot-classifier-chain-yeast-py
+
+
 def chain_classifiers(x, y):
     from sklearn.model_selection import train_test_split
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
