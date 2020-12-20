@@ -22,6 +22,10 @@ BASE_GENRES = [
 ]
 
 
+def genre_to_id(genre):
+    return BASE_GENRES.index(genre) + 1
+
+
 def show_tracks(results):
     for i, item in enumerate(results['items']):
         track = item['track']
@@ -91,7 +95,7 @@ def parse_data_single_output(data, mapToBool=False):
             labels = data[i]['genres'][:1]
 
         if labels[0] in ['electro']:
-            print("skipping electro")
+            # print("skipping electro")
             continue
 
         features = [
