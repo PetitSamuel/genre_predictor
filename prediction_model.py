@@ -24,18 +24,19 @@ def main():
 
     # for multi output models
     max_genres = 2
-    x_train, y_train, x_hold_out, y_hold_out = parse_data_multi_output(data, max_genres)
+    x_train, y_train, x_hold_out, y_hold_out = parse_data_multi_output(
+        data, max_genres)
 
     # train and test each model - accuracy %
-    # knn(x, y)               # 40%
-    # decision_tree(x, y)  # 56%
-    # random_forest(x, y)     # 61+%
-    # baseline(x,y)           # 25%
-    # logistic_reg(x,y.ravel()) # 40%
-    # lr_cv_q(x, y)
-    # lr_cv_C(x,y)
-    # knn_cv_n_neighbours(x,y,[1,2,3]) # k = 1
-    # knn_cv_gamma(x,y,[0.1, 1, 10, 100]) # with k=1 gaussian kernel doesn't have much effect
+    # knn(x_train, y_train)               # 40%
+    # decision_tree(x_train, y_train)  # 56%
+    # random_forest(x_train, y_train)     # 61+%
+    # baseline(x_train,y_train)           # 25%
+    # logistic_reg(x_train,y_train.ravel()) # 40%
+    # lr_cv_q(x_train, y_train)
+    # lr_cv_C(x_train,y_train)
+    # knn_cv_n_neighbours(x_train,y_train,[1,2,3]) # k = 1
+    # knn_cv_gamma(x_train,y_train,[0.1, 1, 10, 100]) # with k=1 gaussian kernel doesn't have much effect
     # about 55%
 
     # knn_hold_out(x_train, y_train, x_hold_out, y_hold_out)
@@ -43,7 +44,7 @@ def main():
     # best_model = chain_classifiers(x_train, y_train)
     # chain_of_classifiers_hold_out(x_hold_out, y_hold_out, best_model, max_genres)
 
-    knn_multi_output(x_train,y_train)
+    knn_multi_output(x_train, y_train)
 
 
 # print a few predictions on the held out dataset
@@ -239,7 +240,8 @@ def lr_cv_q(x, y):
         xpoly = PolynomialFeatures(q).fit_transform(x)
 
         from sklearn.linear_model import LogisticRegression
-        model = LogisticRegression(multi_class='ovr', solver='liblinear', C=100)
+        model = LogisticRegression(
+            multi_class='ovr', solver='liblinear', C=100)
         temp = []
 
         from sklearn.model_selection import KFold
@@ -331,13 +333,14 @@ def create_gaussian_kernel(gamma):
     return g
 
 
-def knn_multi_output(x,y):
+def knn_multi_output(x, y):
 
     from sklearn.model_selection import train_test_split
-    x_train, x_test, y_train, y_test = train_test_split(x,y, test_size=0.2)
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
 
     from sklearn.multioutput import MultiOutputClassifier
-    clf = MultiOutputClassifier(KNeighborsClassifier(n_neighbors=1)).fit(x_train,y_train)
+    clf = MultiOutputClassifier(KNeighborsClassifier(
+        n_neighbors=1)).fit(x_train, y_train)
     y_pred = clf.predict(x_test)
 
     for i in range(len(x_test)):
@@ -346,16 +349,14 @@ def knn_multi_output(x,y):
         print()
 
     for i in range(len(BASE_GENRES)):
-        auc = roc_auc_score(y_test[:, i], y_pred[:,i])
-        print("AUC %s: %.4f" %(BASE_GENRES[i], auc))
-
+        auc = roc_auc_score(y_test[:, i], y_pred[:, i])
+        print("AUC %s: %.4f" % (BASE_GENRES[i], auc))
 
     # cm_y1 = confusion_matrix(y_test[:, 0], y_pred[:, 0])
     # cm_y2 = confusion_matrix(y_test[:, 1], y_pred[:, 1])
 
     # print(cm_y1)
     # print(cm_y2)
-
 
 
 def knn_cv_n_neighbours(x, y, neighbours):
