@@ -9,7 +9,7 @@ from sklearn.neighbors import KNeighborsClassifier, NearestCentroid
 from sklearn.semi_supervised import LabelPropagation, LabelSpreading
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.svm import LinearSVC, SVC
-from sklearn.linear_model import LogisticRegression, RidgeClassifier, RidgeClassifierCV
+from sklearn.linear_model import LogisticRegression, RidgeClassifier, RidgeClassifierCV, Ridge
 from sklearn.neural_network import MLPClassifier
 from skmultilearn.problem_transform import LabelPowerset
 from sklearn.dummy import DummyClassifier
@@ -35,23 +35,24 @@ def main():
     # x, y = parse_data_multi_output_full(data, max_genres)
     x, y = parse_data_single_output_full(data, True)
 
-    bernoulliNB(x, y)
+    # bernoulliNB(x, y)
     decisionTreeClassifier(x, y)
-    extraTreeClassifier(x, y)
-    extraTreesClassifier(x, y)
-    gaussianNB(x, y)
+    # extraTreeClassifier(x, y)
+    # extraTreesClassifier(x, y)
+    # gaussianNB(x, y)
     kNeighborsClassifier(x, y)
-    labelPropagation(x, y)
-    labelSpreading(x, y)
-    linearDiscriminantAnalysis(x, y)
-    linearSVC(x, y)
+    # labelPropagation(x, y)
+    # labelSpreading(x, y)
+    # linearDiscriminantAnalysis(x, y)
+    # linearSVC(x, y)
     svc(x, y)
     logisticRegression(x, y)
     mlpClassifier(x, y)
-    nearestCentroid(x, y)
-    randomForestClassifier(x, y)
+    # nearestCentroid(x, y)
+    # randomForestClassifier(x, y)
     ridgeClassifier(x, y)
-    ridgeClassifierCV(x, y)
+    # ridgeClassifierCV(x, y)
+    ridge(x, y)
     dummyClassifier(x, y)
 
     comparisonGraph()
@@ -218,6 +219,18 @@ def ridgeClassifier(x, y):
 def ridgeClassifierCV(x, y):
     model = RidgeClassifierCV()
     standardSet(model, x, y)
+
+
+def ridge(x, y):
+    scores = []
+    mses = []
+    for alpha in tensValues:
+        model = Ridge(alpha=alpha)
+        accuracy, mse = runSet(model, x, y)
+        scores.append(accuracy)
+        mses.append(mse)
+    showMSEGraph(tensValues, scores, mses, "alpha", model.__class__.__name__)
+    addModelComparison(model, max(scores))
 
 
 def dummyClassifier(x, y):
