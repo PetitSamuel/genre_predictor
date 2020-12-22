@@ -6,7 +6,7 @@ from sklearn.svm import SVC
 from sklearn.linear_model import RidgeClassifier, LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.metrics import roc_auc_score, confusion_matrix, accuracy_score, mean_squared_error, classification_report, roc_auc_score
+from sklearn.metrics import confusion_matrix, accuracy_score, mean_squared_error, classification_report
 from sklearn.dummy import DummyClassifier
 import matplotlib.pyplot as plt
 plt.rcdefaults()
@@ -21,6 +21,7 @@ x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
 
 best_models = []
 best_models_accuracy = []
+best_models_conf_mat = []
 # Train models for each possible genre
 for i in range(len(BASE_GENRES)):
     print("CURRENT GENRE: ", BASE_GENRES[i])
@@ -41,7 +42,8 @@ for i in range(len(BASE_GENRES)):
         accuracy = accuracy_score(y_genre_test, y_pred)
         scores.append(accuracy)
         if best_predictor == None or accuracy > best_predictor[1]:
-            best_predictor = (clf, accuracy)
+            conf_mat = confusion_matrix(y_genre_test, y_pred)
+            best_predictor = (clf, accuracy, conf_mat)
         print('SVC: ', accuracy, '  C: ', C)
 
     bar_chart_labels.append('SVC')
@@ -69,7 +71,8 @@ for i in range(len(BASE_GENRES)):
         scores.append(accuracy)
         print('Ridge: ', accuracy, '  C: ', C)
         if best_predictor == None or accuracy > best_predictor[1]:
-            best_predictor = (clf, accuracy)
+            conf_mat = confusion_matrix(y_genre_test, y_pred)
+            best_predictor = (clf, accuracy, conf_mat)
 
     bar_chart_labels.append('Ridge')
     bar_chart_scores.append(max(scores))
@@ -97,7 +100,8 @@ for i in range(len(BASE_GENRES)):
         scores.append(accuracy)
         print('Logistic: ', accuracy, '  C: ', C)
         if best_predictor == None or accuracy > best_predictor[1]:
-            best_predictor = (clf, accuracy)
+            conf_mat = confusion_matrix(y_genre_test, y_pred)
+            best_predictor = (clf, accuracy, conf_mat)
 
     bar_chart_labels.append('Logistic')
     bar_chart_scores.append(max(scores))
@@ -125,7 +129,8 @@ for i in range(len(BASE_GENRES)):
         scores.append(accuracy)
         print('kNN: ', accuracy, '  n: ', n)
         if best_predictor == None or accuracy > best_predictor[1]:
-            best_predictor = (clf, accuracy)
+            conf_mat = confusion_matrix(y_genre_test, y_pred)
+            best_predictor = (clf, accuracy, conf_mat)
 
     bar_chart_labels.append('kNN')
     bar_chart_scores.append(max(scores))
@@ -148,7 +153,8 @@ for i in range(len(BASE_GENRES)):
     accuracy = accuracy_score(y_genre_test, y_pred)
     print('Decision Tree: ', accuracy)
     if best_predictor == None or accuracy > best_predictor[1]:
-        best_predictor = (clf, accuracy)
+        conf_mat = confusion_matrix(y_genre_test, y_pred)
+        best_predictor = (clf, accuracy, conf_mat)
 
     bar_chart_labels.append('Decision Tree')
     bar_chart_scores.append(accuracy)
@@ -159,7 +165,8 @@ for i in range(len(BASE_GENRES)):
     accuracy = accuracy_score(y_genre_test, y_pred)
     print('Baseline (most frequent): ', accuracy)
     if best_predictor == None or accuracy > best_predictor[1]:
-        best_predictor = (clf, accuracy)
+        conf_mat = confusion_matrix(y_genre_test, y_pred)
+        best_predictor = (clf, accuracy, conf_mat)
 
     bar_chart_labels.append('Baseline')
     bar_chart_scores.append(accuracy)
@@ -175,9 +182,11 @@ for i in range(len(BASE_GENRES)):
 
     best_models.append(best_predictor[0])
     best_models_accuracy.append(best_predictor[1])
+    best_models_conf_mat.append(best_predictor[2])
 
 print("best models in order of genres: ", best_models)
 print("best models accuracy in same order: ", best_models_accuracy)
+print("best models confusion matrix in same order: ", best_models_conf_mat)
 
 # Make a union of all classifiers outputs for each songs
 TP = 0
