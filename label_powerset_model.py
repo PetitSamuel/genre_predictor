@@ -58,47 +58,45 @@ def main():
     showGraphs()
 
 
-# multi - 2 genres - 14% # single - 35%
 def bernoulliNB(x, y):
-    model = BernoulliNB()
-    accuracy, mse = runSet(model, x, y)
-    # printSet(model, accuracy, mse)
-    addModelComparison(model, accuracy)
+    scores = []
+    mses = []
+    for alpha in tensValues:
+        model = BernoulliNB(alpha=alpha)
+        accuracy, mse = runSet(model, x, y)
+        scores.append(accuracy)
+        mses.append(mse)
+    showMSEGraph(tensValues, scores, mses, "alpha", model.__class__.__name__)
+    addModelComparison(model, max(scores))
 
 
-# multi - 2 genres - 47% # single - 58%
 def decisionTreeClassifier(x, y):
     model = DecisionTreeClassifier()
-    accuracy, mse = runSet(model, x, y)
-    # printSet(model, accuracy, mse)
-    addModelComparison(model, accuracy)
+    standardSet(model, x, y)
 
 
-# multi - 2 genres - 48% # single - 56%
 def extraTreeClassifier(x, y):
     model = ExtraTreeClassifier()
-    accuracy, mse = runSet(model, x, y)
-    # printSet(model, accuracy, mse)
-    addModelComparison(model, accuracy)
+    standardSet(model, x, y)
 
 
-# multi - 2 genres - 51% # single - 64%
 def extraTreesClassifier(x, y):
-    model = ExtraTreesClassifier()
-    accuracy, mse = runSet(model, x, y)
-    # printSet(model, accuracy, mse)
-    addModelComparison(model, accuracy)
+    scores = []
+    mses = []
+    for n in wholeValues:
+        model = ExtraTreesClassifier(n_estimators=n)
+        accuracy, mse = runSet(model, x, y)
+        scores.append(accuracy)
+        mses.append(mse)
+    showMSEGraph(wholeValues, scores, mses, "n", model.__class__.__name__)
+    addModelComparison(model, max(scores))
 
 
-# multi - 2 genres -  6% # single - 23%
 def gaussianNB(x, y):
     model = GaussianNB()
-    accuracy, mse = runSet(model, x, y)
-    # printSet(model, accuracy, mse)
-    addModelComparison(model, accuracy)
+    standardSet(model, x, y)
 
 
-# multi - 2 genres - 28% # single - 41%
 def kNeighborsClassifier(x, y):
     scores = []
     mses = []
@@ -111,31 +109,35 @@ def kNeighborsClassifier(x, y):
     addModelComparison(model, max(scores))
 
 
-# multi - 2 genres - 29% # single - 58%
 def labelPropagation(x, y):
-    model = LabelPropagation()
-    accuracy, mse = runSet(model, x, y)
-    # printSet(model, accuracy, mse)
-    addModelComparison(model, accuracy)
+    scores = []
+    mses = []
+    for gamma in tensValues:
+        model = LabelPropagation(gamma=gamma)
+        accuracy, mse = runSet(model, x, y)
+        scores.append(accuracy)
+        mses.append(mse)
+    showMSEGraph(tensValues, scores, mses, "gamma", model.__class__.__name__)
+    addModelComparison(model, max(scores))
 
 
-# multi - 2 genres - 30% # single - 56%
 def labelSpreading(x, y):
-    model = LabelSpreading()
-    accuracy, mse = runSet(model, x, y)
-    # printSet(model, accuracy, mse)
-    addModelComparison(model, accuracy)
+    scores = []
+    mses = []
+    for gamma in tensValues:
+        model = LabelSpreading(gamma=gamma)
+        accuracy, mse = runSet(model, x, y)
+        scores.append(accuracy)
+        mses.append(mse)
+    showMSEGraph(tensValues, scores, mses, "gamma", model.__class__.__name__)
+    addModelComparison(model, max(scores))
 
 
-# multi - 2 genres - 27% # single - 42%
 def linearDiscriminantAnalysis(x, y):
     model = LinearDiscriminantAnalysis()
-    accuracy, mse = runSet(model, x, y)
-    # printSet(model, accuracy, mse)
-    addModelComparison(model, accuracy)
+    standardSet(model, x, y)
 
 
-# multi - 2 genres - 30% # single - 41%
 def linearSVC(x, y):
     scores = []
     mses = []
@@ -148,7 +150,6 @@ def linearSVC(x, y):
     addModelComparison(model, max(scores))
 
 
-# multi - 2 genres - 30% # single - 43%
 def svc(x, y):
     scores = []
     mses = []
@@ -161,7 +162,6 @@ def svc(x, y):
     addModelComparison(model, max(scores))
 
 
-# multi - 2 genres - 30% # single - 44%
 def logisticRegression(x, y):
     scores = []
     mses = []
@@ -174,31 +174,35 @@ def logisticRegression(x, y):
     addModelComparison(model, max(scores))
 
 
-# multi - 2 genres - 31% # single - 47%
 def mlpClassifier(x, y):
-    model = MLPClassifier(max_iter=1000)
-    accuracy, mse = runSet(model, x, y)
-    # printSet(model, accuracy, mse)
-    addModelComparison(model, accuracy)
+    scores = []
+    mses = []
+    for alpha in tensValues:
+        model = MLPClassifier(max_iter=1000, alpha=alpha)
+        accuracy, mse = runSet(model, x, y)
+        scores.append(accuracy)
+        mses.append(mse)
+    showMSEGraph(tensValues, scores, mses, "alpha", model.__class__.__name__)
+    addModelComparison(model, max(scores))
 
 
-# multi - 2 genres -  7% # single - 31%
 def nearestCentroid(x, y):
     model = NearestCentroid()
-    accuracy, mse = runSet(model, x, y)
-    # printSet(model, accuracy, mse)
-    addModelComparison(model, accuracy)
+    standardSet(model, x, y)
 
 
-# multi - 2 genres - 51% # single - 64%
 def randomForestClassifier(x, y):
-    model = RandomForestClassifier()
-    accuracy, mse = runSet(model, x, y)
-    # printSet(model, accuracy, mse)
-    addModelComparison(model, accuracy)
+    scores = []
+    mses = []
+    for n in wholeValues:
+        model = RandomForestClassifier(n_estimators=n)
+        accuracy, mse = runSet(model, x, y)
+        scores.append(accuracy)
+        mses.append(mse)
+    showMSEGraph(wholeValues, scores, mses, "n", model.__class__.__name__)
+    addModelComparison(model, max(scores))
 
 
-# multi - 2 genres - 28% # single - 38%
 def ridgeClassifier(x, y):
     scores = []
     mses = []
@@ -211,17 +215,17 @@ def ridgeClassifier(x, y):
     addModelComparison(model, max(scores))
 
 
-# multi - 2 genres - 28% # single - 37%
 def ridgeClassifierCV(x, y):
     model = RidgeClassifierCV()
-    accuracy, mse = runSet(model, x, y)
-    # printSet(model, accuracy, mse)
-    addModelComparison(model, accuracy)
+    standardSet(model, x, y)
 
 
-# multi - 2 genres - 14% # single - 29%
 def dummyClassifier(x, y):
     model = DummyClassifier(strategy="most_frequent")
+    standardSet(model, x, y)
+
+
+def standardSet(model, x, y):
     accuracy, mse = runSet(model, x, y)
     # printSet(model, accuracy, mse)
     addModelComparison(model, accuracy)
