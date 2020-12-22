@@ -149,3 +149,20 @@ def map_true_false(y):
                 song_list.append(False)
         mapped_y.append(song_list)
     return mapped_y
+
+
+def get_precision(tp, fp):
+    return tp / (tp + fp)
+
+
+def get_tpr(tp, fn):
+    if tp == 0 or fn == 0:
+        return 0
+    else:
+        return tp / (tp + fn)
+
+
+def get_f1(tp, fp, fn):
+    prec = get_precision(tp, fp)
+    tpr = get_tpr(tp, fn)
+    return 2 * prec * tpr / (prec + tpr)

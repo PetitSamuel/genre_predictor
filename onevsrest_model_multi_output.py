@@ -1,6 +1,6 @@
 from sklearn.model_selection import train_test_split
 import json
-from util import BASE_GENRES, parse_data_multi_output, parse_data_single_output, genre_to_id
+from util import BASE_GENRES, parse_data_multi_output, parse_data_single_output, genre_to_id, get_precision, get_f1, get_tpr
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.svm import SVC
 from sklearn.linear_model import RidgeClassifier, LogisticRegression
@@ -20,6 +20,7 @@ x, y, x_hold_out, y_hold_out = parse_data_multi_output(data, len(BASE_GENRES))
 x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
 
 best_models = []
+best_models_accuracy = []
 # Train models for each possible genre
 for i in range(len(BASE_GENRES)):
     print("CURRENT GENRE: ", BASE_GENRES[i])
@@ -173,25 +174,34 @@ for i in range(len(BASE_GENRES)):
     ax.set_title("Best score for each model for genre " + BASE_GENRES[i])
 
     best_models.append(best_predictor[0])
+    best_models_accuracy.append(best_predictor[1])
+
+print("best models in order of genres: ", best_models)
+print("best models accuracy in same order: ", best_models_accuracy)
 
 # Make a union of all classifiers outputs for each songs
-count_right_prediction = 0
-count_wrong_prediction = 0
+TP = 0
+TN = 0
+FP = 0
+FN = 0
 for track_index in range(len(x_test)):
     x_track = x_test[track_index]
     y_track = y_test[track_index]
     # For each track, for each genre, count the right and wrong predictions
     for genre_index in range(len(BASE_GENRES)):
         pred = best_models[genre_index].predict([x_track])
-        if pred[0] == y_track[genre_index]:
-            count_right_prediction += 1
+        if y_track[genre_index] == True and pred[0] == y_track[genre_index]:
+            TP += 1
+        elif y_track[genre_index] == False and pred[0] == y_track[genre_index]:
+            TN += 1
+        elif pred[0] == True:
+            FP += 1
         else:
-            count_wrong_prediction += 1
+            FN += 1
 
-# accuracy is the count of total valid predictions divided by total predictions
-accuracy = count_right_prediction / \
-    (count_right_prediction + count_wrong_prediction)
-print("Correct predictions: ", count_right_prediction,
-      "\nIncorrect predictions: ", count_wrong_prediction, "\nAccuracy", accuracy)
-
+print("\nConfusion Matrix")
+print(TP, TN)
+print(FP, FN)
+print("\nPrecision and F1 metric: ")
+print(get_precision(TP, FP), get_f1(TP, FP, FN))
 plt.show()

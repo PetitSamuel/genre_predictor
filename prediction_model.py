@@ -12,13 +12,13 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.multiclass import OneVsRestClassifier
 import matplotlib.pyplot as plt
-from util import BASE_GENRES, parse_data_multi_output, parse_data_single_output, map_true_false
+from util import BASE_GENRES, parse_data_multi_output, parse_data_single_output, map_true_false, get_f1, get_precision, get_tpr
 
 
 # Slightly simplified the problem to just picking the most likely genre given a set of features
 
 def main():
-    plt.rc('font', size=14);
+    plt.rc('font', size=14)
     plt.rcParams['figure.constrained_layout.use'] = True
     with open('./data/11k_songs_tso_dataset.json') as f:
         data = json.load(f)
@@ -296,23 +296,6 @@ def knn_multi_output(x, y):
     print("av tpr", np.array(tprs).mean())
 
 
-def get_precision(tp, fp):
-    return tp / (tp + fp)
-
-
-def get_tpr(tp, fn):
-    if tp == 0 or fn == 0:
-        return 0
-    else:
-        return tp / (tp + fn)
-
-
-def get_f1(tp, fp, fn):
-    prec = get_precision(tp, fp)
-    tpr = get_tpr(tp, fn)
-    return 2 * prec * tpr / (prec + tpr)
-
-
 def get_confusion_matrix(tp, fp, tn, fn):
     print(tp, fp)
     print(fn, tn)
@@ -342,7 +325,8 @@ def knn_multi_output_cv(x, y):
             mean_auc.append(np.array(temp).mean())
             std_auc.append(np.array(temp).std())
         plt.errorbar(n_neighbours, mean_auc, yerr=std_auc)
-        plt.title("Genre: %s #Neighbours vs Mean AUC with standard error" % BASE_GENRES[genre])
+        plt.title("Genre: %s #Neighbours vs Mean AUC with standard error" %
+                  BASE_GENRES[genre])
         plt.xlabel("# Neighbours")
         plt.ylabel("Mean AUC")
         plt.show()
