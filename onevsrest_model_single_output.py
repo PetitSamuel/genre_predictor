@@ -110,7 +110,7 @@ ax.errorbar(C_range, scores, label='Mean accuracy', yerr=mses)
 ax.set_ylabel("Score (mean accuracy) of the model")
 ax.set_xlabel("C")
 ax.set_title(
-    "C Cross-validation | SVC model")
+    "C Cross-validation | Logistic model")
 ax.legend(loc='lower right')
 plt.rcParams['figure.constrained_layout.use'] = True
 plt.rc('font', size=18)
