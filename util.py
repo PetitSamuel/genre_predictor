@@ -45,6 +45,16 @@ def pp_json(json_thing, sort=True, indents=4):
 
 # max = max labels per datum
 def parse_data_multi_output(data, max):
+    x, y = parse_data_multi_output_full(data, max)
+    x_train = x[:10000]
+    y_train = y[:10000]
+    x_hold_out = x[10000:]
+    y_hold_out = y[10000:]
+
+    return x_train, y_train, x_hold_out, y_hold_out
+
+
+def parse_data_multi_output_full(data, max):
     x = []
     y = []
     for i in range(len(data)):
@@ -74,6 +84,12 @@ def parse_data_multi_output(data, max):
 
     from sklearn.utils import shuffle
     x, y = shuffle(x, y)
+
+    return x, y
+
+
+def parse_data_single_output(data, mapToBool=False):
+    x, y = parse_data_single_output_full(data, mapToBool)
     x_train = x[:10000]
     y_train = y[:10000]
     x_hold_out = x[10000:]
@@ -82,7 +98,7 @@ def parse_data_multi_output(data, max):
     return x_train, y_train, x_hold_out, y_hold_out
 
 
-def parse_data_single_output(data, mapToBool=False):
+def parse_data_single_output_full(data, mapToBool=False):
     # Splitting data into inputs and labels
     x = []
     y = []
@@ -117,12 +133,8 @@ def parse_data_single_output(data, mapToBool=False):
 
     from sklearn.utils import shuffle
     x, y = shuffle(x, y)
-    x_train = x[:10000]
-    y_train = y[:10000]
-    x_hold_out = x[10000:]
-    y_hold_out = y[10000:]
 
-    return x_train, y_train, x_hold_out, y_hold_out
+    return x, y
 
 
 # Map array of genres to True/False values for multi output models
