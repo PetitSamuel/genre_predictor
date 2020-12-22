@@ -6,7 +6,7 @@ from sklearn.svm import SVC
 from sklearn.linear_model import RidgeClassifier, LogisticRegression
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.metrics import roc_auc_score, confusion_matrix, accuracy_score, mean_squared_error
+from sklearn.metrics import confusion_matrix, accuracy_score, mean_squared_error, precision_recall_fscore_support
 from sklearn.dummy import DummyClassifier
 import matplotlib.pyplot as plt
 plt.rcdefaults()
@@ -19,18 +19,21 @@ def map_to_genre_id(item):
     return genre_to_id(item[0])
 
 
-with open('./data/11k_songs_tso_dataset.json') as f:
+with open('./data/2k_songs_sample_dataset.json') as f:
     data = json.load(f)
 
-# for single output models
 x, y, x_hold_out, y_hold_out = parse_data_single_output(data)
 # Map the array of genres to a set of genre IDs
 y = list(map(map_to_genre_id, y))
-
+# Split dataset into train / test
 x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
 
+# List of accuracy / model type for a bar chart comparison
 bar_chart_labels = []
 bar_chart_scores = []
+
+# The model with the best accuracy
+best_model = None
 
 C_range = [0.0001, 0.01, 0.1, 1, 5, 10, 20, 30, 40, 50, 75, 100]
 scores = []
@@ -42,6 +45,10 @@ for C in C_range:
     scores.append(accuracy)
     mses.append(mean_squared_error(y_test, y_pred))
     print('SVC: ', accuracy, '  C: ', C)
+    if best_model == None or accuracy > best_model[1]:
+        conf_mat = precision_recall_fscore_support(
+            y_test, y_pred, average='weighted')
+        best_model = (clf, accuracy, conf_mat)
 
 bar_chart_labels.append('SVC')
 bar_chart_scores.append(max(scores))
@@ -70,6 +77,10 @@ for alpha in alpha_range:
     scores.append(accuracy)
     mses.append(mean_squared_error(y_test, y_pred))
     print('Ridge: ', accuracy, '  C: ', C)
+    if best_model == None or accuracy > best_model[1]:
+        conf_mat = precision_recall_fscore_support(
+            y_test, y_pred, average='weighted')
+        best_model = (clf, accuracy, conf_mat)
 
 bar_chart_labels.append('Ridge')
 bar_chart_scores.append(max(scores))
@@ -98,6 +109,10 @@ for C in C_range:
     scores.append(accuracy)
     mses.append(mean_squared_error(y_test, y_pred))
     print('Logistic: ', accuracy, '  C: ', C)
+    if best_model == None or accuracy > best_model[1]:
+        conf_mat = precision_recall_fscore_support(
+            y_test, y_pred, average='weighted')
+        best_model = (clf, accuracy, conf_mat)
 
 bar_chart_labels.append('Logistic')
 bar_chart_scores.append(max(scores))
@@ -126,6 +141,10 @@ for n in neighbors_range:
     scores.append(accuracy)
     mses.append(mean_squared_error(y_test, y_pred))
     print('kNN: ', accuracy, '  n: ', n)
+    if best_model == None or accuracy > best_model[1]:
+        conf_mat = precision_recall_fscore_support(
+            y_test, y_pred, average='weighted')
+        best_model = (clf, accuracy, conf_mat)
 
 bar_chart_labels.append('kNN')
 bar_chart_scores.append(max(scores))
@@ -147,6 +166,10 @@ clf = OneVsRestClassifier(DecisionTreeClassifier()).fit(x_train, y_train)
 y_pred = clf.predict(x_test)
 accuracy = accuracy_score(y_test, y_pred)
 print('Decision Tree: ', accuracy)
+if best_model == None or accuracy > best_model[1]:
+    conf_mat = precision_recall_fscore_support(
+        y_test, y_pred, average='weighted')
+    best_model = (clf, accuracy, conf_mat)
 
 bar_chart_labels.append('Decision Tree')
 bar_chart_scores.append(accuracy)
@@ -156,6 +179,10 @@ clf = OneVsRestClassifier(DummyClassifier(
 y_pred = clf.predict(x_test)
 accuracy = accuracy_score(y_test, y_pred)
 print('Baseline (most frequent): ', accuracy)
+if best_model == None or accuracy > best_model[1]:
+    conf_mat = precision_recall_fscore_support(
+        y_test, y_pred, average='weighted')
+    best_model = (clf, accuracy, conf_mat)
 
 bar_chart_labels.append('Baseline')
 bar_chart_scores.append(accuracy)
@@ -167,4 +194,6 @@ ax.bar(bar_chart_labels, bar_chart_scores, color='green')
 ax.set_xlabel("Model")
 ax.set_ylabel("Best Score (accuracy)")
 
+# Print the model with the highest accuracy, its accuracy and precision metrics (precision recall, f1...)
+print(best_model)
 plt.show()
