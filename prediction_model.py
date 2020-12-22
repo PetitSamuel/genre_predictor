@@ -2,7 +2,8 @@ import pandas as pd
 import numpy as np
 import json
 
-from sklearn.metrics import roc_auc_score, confusion_matrix
+from sklearn import preprocessing
+from sklearn.metrics import roc_auc_score, confusion_matrix, plot_roc_curve, roc_curve
 from sklearn.pipeline import Pipeline
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.model_selection import GridSearchCV
@@ -11,12 +12,14 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.multiclass import OneVsRestClassifier
 import matplotlib.pyplot as plt
-from util import BASE_GENRES, parse_data_multi_output, parse_data_single_output
+from util import BASE_GENRES, parse_data_multi_output, parse_data_single_output, map_true_false
 
 
 # Slightly simplified the problem to just picking the most likely genre given a set of features
 
 def main():
+    plt.rc('font', size=14);
+    plt.rcParams['figure.constrained_layout.use'] = True
     with open('./data/11k_songs_tso_dataset.json') as f:
         data = json.load(f)
     # for single output models
@@ -63,6 +66,7 @@ def true_false_to_genres(tf_arr):
         if tf_arr[i]:
             genres.append(BASE_GENRES[i])
     return genres
+
 
 # chain of classifers example from
 # https://scikit-learn.org/stable/auto_examples/multioutput/plot_classifier_chain_yeast.html#sphx-glr-auto-examples-multioutput-plot-classifier-chain-yeast-py
@@ -241,29 +245,107 @@ def create_gaussian_kernel(gamma):
 
 
 def knn_multi_output(x, y):
-
     from sklearn.model_selection import train_test_split
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.1)
 
     from sklearn.multioutput import MultiOutputClassifier
     clf = MultiOutputClassifier(KNeighborsClassifier(
         n_neighbors=1)).fit(x_train, y_train)
     y_pred = clf.predict(x_test)
 
-    for i in range(len(x_test)):
-        print("Actual: ", true_false_to_genres(y_test[i]))
-        print("Pred: ", true_false_to_genres(y_pred[i]))
-        print()
+    # for i in range(len(x_test)):
+    #     print("Actual: ", true_false_to_genres(y_test[i]))
+    #     print("Pred: ", true_false_to_genres(y_pred[i]))
+    #     print()
 
     for i in range(len(BASE_GENRES)):
         auc = roc_auc_score(y_test[:, i], y_pred[:, i])
         print("AUC %s: %.4f" % (BASE_GENRES[i], auc))
 
-    # cm_y1 = confusion_matrix(y_test[:, 0], y_pred[:, 0])
-    # cm_y2 = confusion_matrix(y_test[:, 1], y_pred[:, 1])
+    # for i in range(len(BASE_GENRES)):
+    #     cm = confusion_matrix(y_test[:,i], y_pred[:,i])
+    #     print(BASE_GENRES[i] + "'s Confusion Matrix")
+    #     print(cm)
+    f1s = []
+    tprs = []
+    for genre in range(len(BASE_GENRES)):
+        TP = 0
+        FP = 0
+        TN = 0
+        FN = 0
+        genre = BASE_GENRES[genre]
+        for i in range(len(y_test)):
+            truth_genres = true_false_to_genres(y_test[i])
+            pred_genres = true_false_to_genres(y_pred[i])
+            if genre in truth_genres:
+                if genre in pred_genres:
+                    TP += 1
+                else:
+                    FN += 1
+            else:
+                if genre in pred_genres:
+                    FP += 1
+                else:
+                    TN += 1
+        print("Confusion Matrix of ", genre)
+        get_confusion_matrix(TP, FP, TN, FN)
+        f1s.append(get_f1(TP, FP, FN))
+        tprs.append(get_tpr(TP, FN))
 
-    # print(cm_y1)
-    # print(cm_y2)
+    print("av f1", np.array(f1s).mean())
+    print("av tpr", np.array(tprs).mean())
+
+
+def get_precision(tp, fp):
+    return tp / (tp + fp)
+
+
+def get_tpr(tp, fn):
+    if tp == 0 or fn == 0:
+        return 0
+    else:
+        return tp / (tp + fn)
+
+
+def get_f1(tp, fp, fn):
+    prec = get_precision(tp, fp)
+    tpr = get_tpr(tp, fn)
+    return 2 * prec * tpr / (prec + tpr)
+
+
+def get_confusion_matrix(tp, fp, tn, fn):
+    print(tp, fp)
+    print(fn, tn)
+
+
+def knn_multi_output_cv(x, y):
+    n_neighbours = [1, 2, 3, 5]
+
+    for genre in range(len(BASE_GENRES)):
+        mean_auc = []
+        std_auc = []
+        for nn in n_neighbours:
+            from sklearn.multioutput import MultiOutputClassifier
+            clf = MultiOutputClassifier(KNeighborsClassifier(
+                n_neighbors=nn))
+
+            temp = []
+            from sklearn.model_selection import KFold
+            kf = KFold(n_splits=5)
+            for train, test in kf.split(x):
+                clf.fit(x[train], y[train])
+                y_pred = clf.predict(x[test])
+
+                auc = roc_auc_score(y[test][:, genre], y_pred[:, genre])
+                print(auc)
+                temp.append(auc)
+            mean_auc.append(np.array(temp).mean())
+            std_auc.append(np.array(temp).std())
+        plt.errorbar(n_neighbours, mean_auc, yerr=std_auc)
+        plt.title("Genre: %s #Neighbours vs Mean AUC with standard error" % BASE_GENRES[genre])
+        plt.xlabel("# Neighbours")
+        plt.ylabel("Mean AUC")
+        plt.show()
 
 
 def knn_cv_n_neighbours(x, y, neighbours):
