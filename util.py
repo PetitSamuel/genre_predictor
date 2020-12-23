@@ -74,6 +74,13 @@ def parse_data_multi_output_full(data, max):
             data[i]['instrumentalness'],
             data[i]['liveness'],
             data[i]['valence'],
+            # Optional
+            # data[i]['key'],
+            # data[i]['loudness'],
+            # data[i]['mode'],
+            # data[i]['tempo'],
+            # data[i]['duration_ms'],
+            # data[i]['time_signature'],
         ]
         x.append(features)
         y.append(labels)
@@ -122,6 +129,13 @@ def parse_data_single_output_full(data, mapToBool=False):
             data[i]['instrumentalness'],
             data[i]['liveness'],
             data[i]['valence'],
+            # Optional
+            # data[i]['key'],
+            # data[i]['loudness'],
+            # data[i]['mode'],
+            # data[i]['tempo'],
+            # data[i]['duration_ms'],
+            # data[i]['time_signature'],
         ]
         x.append(features)
         y.append(labels)
