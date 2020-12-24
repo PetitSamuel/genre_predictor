@@ -11,11 +11,11 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.multiclass import OneVsRestClassifier
 import matplotlib.pyplot as plt
-from util import BASE_GENRES, parse_data_multi_output, parse_data_single_output, map_true_false
+from util import BASE_GENRES, parse_data_multi_output, parse_data_single_output, map_true_false, get_f1, get_precision, get_tpr
 
 
 def main():
-    plt.rc('font', size=14);
+    plt.rc('font', size=14)
     plt.rcParams['figure.constrained_layout.use'] = True
     with open('./data/11k_songs_tso_dataset.json') as f:
         data = json.load(f)
@@ -398,11 +398,12 @@ def get_f1(tp, fp, fn):
     return 2 * prec * tpr / (prec + tpr)
 
 
+
 def get_confusion_matrix(tp, fp, tn, fn):
     print(tp, fp)
     print(fn, tn)
 
-
+    
 # knn network - number of neighbours cross validated
 # though non deterministic number chosen each time
 # with no real change in accuracy results

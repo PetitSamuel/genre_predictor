@@ -8,13 +8,23 @@ from sklearn.ensemble import ExtraTreesClassifier, RandomForestClassifier
 from sklearn.neighbors import KNeighborsClassifier, NearestCentroid
 from sklearn.semi_supervised import LabelPropagation, LabelSpreading
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
-from sklearn.svm import LinearSVC
-from sklearn.linear_model import LogisticRegression, RidgeClassifier, RidgeClassifierCV
+from sklearn.svm import LinearSVC, SVC
+from sklearn.linear_model import LogisticRegression, RidgeClassifier, RidgeClassifierCV, Ridge
 from sklearn.neural_network import MLPClassifier
 from skmultilearn.problem_transform import LabelPowerset
 from sklearn.dummy import DummyClassifier
-from sklearn.metrics import accuracy_score
-from util import BASE_GENRES, parse_data_multi_output, parse_data_single_output
+from sklearn.metrics import accuracy_score, mean_squared_error
+from util import BASE_GENRES, parse_data_multi_output_full, parse_data_single_output_full
+from sklearn.model_selection import KFold
+
+import matplotlib.pyplot as plt
+
+tensValues = [0.0001, 0.001, 0.01, 0.1, 1, 10, 100, 1000]
+wholeValues = [1, 10, 100, 1000]
+modelLabels = []
+modelScores = []
+figureNo = 0
+splitNo = 10
 
 
 def main():
@@ -22,50 +32,277 @@ def main():
         data = json.load(f)
 
     # max_genres = 2
-    # x_train, y_train, x_hold_out, y_hold_out = parse_data_multi_output(
-    #     data, max_genres)
-    x_train, y_train, x_hold_out, y_hold_out = parse_data_single_output(
-        data, True)
+    # x, y = parse_data_multi_output_full(data, max_genres)
+    x, y = parse_data_single_output_full(data, True)
 
-    model = BernoulliNB()
-    # multi - 2 genres - 14% # single - 35%
-    # model = DecisionTreeClassifier()
-    # # multi - 2 genres - 47% # single - 58%
-    # model = ExtraTreeClassifier()
-    # # multi - 2 genres - 48% # single - 56%
-    # model = ExtraTreesClassifier()
-    # # multi - 2 genres - 51% # single - 64%
-    # model = GaussianNB()
-    # # multi - 2 genres -  6% # single - 23%
-    # model = KNeighborsClassifier()
-    # # multi - 2 genres - 28% # single - 41%
-    # model = LabelPropagation()
-    # # multi - 2 genres - 29% # single - 58%
-    # model = LabelSpreading()
-    # # multi - 2 genres - 30% # single - 56%
-    # model = LinearDiscriminantAnalysis()
-    # # multi - 2 genres - 27% # single - 42%
-    # model = LinearSVC(max_iter=10000)
-    # # multi - 2 genres - 30% # single - 41%
-    # model = LogisticRegression(max_iter=500)
-    # # multi - 2 genres - 30% # single - 44%
-    # model = MLPClassifier(max_iter=1000)
-    # # multi - 2 genres - 31% # single - 47%
-    # model = NearestCentroid()
-    # # multi - 2 genres -  7% # single - 31%
-    # model = RandomForestClassifier()
-    # # multi - 2 genres - 51% # single - 64%
-    # model = RidgeClassifier()
-    # # multi - 2 genres - 28% # single - 38%
-    # model = RidgeClassifierCV()
-    # # multi - 2 genres - 28% # single - 37%
-    # model = DummyClassifier(strategy="most_frequent")
-    # # multi - 2 genres - 14% # single - 29%
+    # bernoulliNB(x, y)
+    decisionTreeClassifier(x, y)
+    # extraTreeClassifier(x, y)
+    # extraTreesClassifier(x, y)
+    # gaussianNB(x, y)
+    kNeighborsClassifier(x, y)
+    # labelPropagation(x, y)
+    # labelSpreading(x, y)
+    # linearDiscriminantAnalysis(x, y)
+    # linearSVC(x, y)
+    svc(x, y)
+    logisticRegression(x, y)
+    mlpClassifier(x, y)
+    # nearestCentroid(x, y)
+    # randomForestClassifier(x, y)
+    ridgeClassifier(x, y)
+    # ridgeClassifierCV(x, y)
+    ridge(x, y)
+    dummyClassifier(x, y)
 
-    classifier = LabelPowerset(model)
-    classifier.fit(x_train, y_train)
-    predictions = classifier.predict(x_hold_out)
-    print("Accuracy = ", accuracy_score(y_hold_out, predictions))
+    comparisonGraph()
+    showGraphs()
+
+
+def bernoulliNB(x, y):
+    scores = []
+    mses = []
+    for alpha in tensValues:
+        model = BernoulliNB(alpha=alpha)
+        accuracy, mse = runSet(model, x, y)
+        scores.append(accuracy)
+        mses.append(mse)
+    showMSEGraph(tensValues, scores, mses, "alpha", model.__class__.__name__)
+    addModelComparison(model, max(scores))
+
+
+def decisionTreeClassifier(x, y):
+    model = DecisionTreeClassifier()
+    standardSet(model, x, y)
+
+
+def extraTreeClassifier(x, y):
+    model = ExtraTreeClassifier()
+    standardSet(model, x, y)
+
+
+def extraTreesClassifier(x, y):
+    scores = []
+    mses = []
+    for n in wholeValues:
+        model = ExtraTreesClassifier(n_estimators=n)
+        accuracy, mse = runSet(model, x, y)
+        scores.append(accuracy)
+        mses.append(mse)
+    showMSEGraph(wholeValues, scores, mses, "n", model.__class__.__name__)
+    addModelComparison(model, max(scores))
+
+
+def gaussianNB(x, y):
+    model = GaussianNB()
+    standardSet(model, x, y)
+
+
+def kNeighborsClassifier(x, y):
+    scores = []
+    mses = []
+    for k in wholeValues:
+        model = KNeighborsClassifier(n_neighbors=k)
+        accuracy, mse = runSet(model, x, y)
+        scores.append(accuracy)
+        mses.append(mse)
+    showMSEGraph(wholeValues, scores, mses, "k", model.__class__.__name__)
+    addModelComparison(model, max(scores))
+
+
+def labelPropagation(x, y):
+    scores = []
+    mses = []
+    for gamma in tensValues:
+        model = LabelPropagation(gamma=gamma)
+        accuracy, mse = runSet(model, x, y)
+        scores.append(accuracy)
+        mses.append(mse)
+    showMSEGraph(tensValues, scores, mses, "gamma", model.__class__.__name__)
+    addModelComparison(model, max(scores))
+
+
+def labelSpreading(x, y):
+    scores = []
+    mses = []
+    for gamma in tensValues:
+        model = LabelSpreading(gamma=gamma)
+        accuracy, mse = runSet(model, x, y)
+        scores.append(accuracy)
+        mses.append(mse)
+    showMSEGraph(tensValues, scores, mses, "gamma", model.__class__.__name__)
+    addModelComparison(model, max(scores))
+
+
+def linearDiscriminantAnalysis(x, y):
+    model = LinearDiscriminantAnalysis()
+    standardSet(model, x, y)
+
+
+def linearSVC(x, y):
+    scores = []
+    mses = []
+    for C in tensValues:
+        model = LinearSVC(max_iter=10000, C=C)
+        accuracy, mse = runSet(model, x, y)
+        scores.append(accuracy)
+        mses.append(mse)
+    showMSEGraph(tensValues, scores, mses, "C", model.__class__.__name__)
+    addModelComparison(model, max(scores))
+
+
+def svc(x, y):
+    scores = []
+    mses = []
+    for C in tensValues:
+        model = SVC(C=C)
+        accuracy, mse = runSet(model, x, y)
+        scores.append(accuracy)
+        mses.append(mse)
+    showMSEGraph(tensValues, scores, mses, "C", model.__class__.__name__)
+    addModelComparison(model, max(scores))
+
+
+def logisticRegression(x, y):
+    scores = []
+    mses = []
+    for C in tensValues:
+        model = LogisticRegression(max_iter=500, C=C)
+        accuracy, mse = runSet(model, x, y)
+        scores.append(accuracy)
+        mses.append(mse)
+    showMSEGraph(tensValues, scores, mses, "C", model.__class__.__name__)
+    addModelComparison(model, max(scores))
+
+
+def mlpClassifier(x, y):
+    scores = []
+    mses = []
+    for alpha in tensValues:
+        model = MLPClassifier(max_iter=1000, alpha=alpha)
+        accuracy, mse = runSet(model, x, y)
+        scores.append(accuracy)
+        mses.append(mse)
+    showMSEGraph(tensValues, scores, mses, "alpha", model.__class__.__name__)
+    addModelComparison(model, max(scores))
+
+
+def nearestCentroid(x, y):
+    model = NearestCentroid()
+    standardSet(model, x, y)
+
+
+def randomForestClassifier(x, y):
+    scores = []
+    mses = []
+    for n in wholeValues:
+        model = RandomForestClassifier(n_estimators=n)
+        accuracy, mse = runSet(model, x, y)
+        scores.append(accuracy)
+        mses.append(mse)
+    showMSEGraph(wholeValues, scores, mses, "n", model.__class__.__name__)
+    addModelComparison(model, max(scores))
+
+
+def ridgeClassifier(x, y):
+    scores = []
+    mses = []
+    for alpha in tensValues:
+        model = RidgeClassifier(alpha=alpha)
+        accuracy, mse = runSet(model, x, y)
+        scores.append(accuracy)
+        mses.append(mse)
+    showMSEGraph(tensValues, scores, mses, "alpha", model.__class__.__name__)
+    addModelComparison(model, max(scores))
+
+
+def ridgeClassifierCV(x, y):
+    model = RidgeClassifierCV()
+    standardSet(model, x, y)
+
+
+def ridge(x, y):
+    scores = []
+    mses = []
+    for alpha in tensValues:
+        model = Ridge(alpha=alpha)
+        accuracy, mse = runSet(model, x, y)
+        scores.append(accuracy)
+        mses.append(mse)
+    showMSEGraph(tensValues, scores, mses, "alpha", model.__class__.__name__)
+    addModelComparison(model, max(scores))
+
+
+def dummyClassifier(x, y):
+    model = DummyClassifier(strategy="most_frequent")
+    standardSet(model, x, y)
+
+
+def standardSet(model, x, y):
+    accuracy, mse = runSet(model, x, y)
+    # printSet(model, accuracy, mse)
+    addModelComparison(model, accuracy)
+
+
+def runSet(model, x, y):
+    mse = []
+    accuracy = []
+    kf = KFold(n_splits=splitNo)
+    for train, test in kf.split(x):
+        classifier = LabelPowerset(model)
+        classifier.fit(x[train], y[train])
+        predictions = classifier.predict(x[test])
+        accuracy.append(accuracy_score(y[test], predictions))
+        mse.append(mean_squared_error(y[test], predictions.toarray()))
+    mse = np.array(mse)
+    accuracy = np.array(accuracy)
+
+    mse = np.mean(mse)
+    accuracy = np.mean(accuracy)
+
+    return accuracy, mse
+
+
+def printSet(model, accuracy, mse):
+    print(
+        model.__class__.__name__,
+        "\n\tAccuracy:\t\t", accuracy,
+        "\n\tMean Squared Error:\t", mse
+    )
+
+
+def showMSEGraph(values, scores, mses, xName, modelName):
+    plt.figure(getFigureNo())
+    plt.rc("font", size=16)
+    plt.rcParams["figure.constrained_layout.use"] = True
+    plt.errorbar(values, scores, yerr=mses, color="black", linewidth=2)
+    plt.xlabel(xName)
+    plt.ylabel("Mean")
+    plt.legend([modelName])
+
+
+def comparisonGraph():
+    plt.figure(getFigureNo())
+    plt.rc("font", size=16)
+    plt.rcParams["figure.constrained_layout.use"] = True
+    plt.bar(modelLabels, modelScores, color='green')
+    plt.xlabel("Model")
+    plt.ylabel("Accuracy")
+
+
+def showGraphs():
+    plt.show()
+
+
+def addModelComparison(model, score):
+    modelLabels.append(model.__class__.__name__)
+    modelScores.append(score)
+
+
+def getFigureNo():
+    global figureNo
+    figureNo += 1
+    return figureNo
 
 
 main()

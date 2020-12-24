@@ -45,6 +45,16 @@ def pp_json(json_thing, sort=True, indents=4):
 
 # max = max labels per datum
 def parse_data_multi_output(data, max):
+    x, y = parse_data_multi_output_full(data, max)
+    x_train = x[:10000]
+    y_train = y[:10000]
+    x_hold_out = x[10000:]
+    y_hold_out = y[10000:]
+
+    return x_train, y_train, x_hold_out, y_hold_out
+
+
+def parse_data_multi_output_full(data, max):
     x = []
     y = []
     for i in range(len(data)):
@@ -64,6 +74,13 @@ def parse_data_multi_output(data, max):
             data[i]['instrumentalness'],
             data[i]['liveness'],
             data[i]['valence'],
+            # Optional
+            # data[i]['key'],
+            # data[i]['loudness'],
+            # data[i]['mode'],
+            # data[i]['tempo'],
+            # data[i]['duration_ms'],
+            # data[i]['time_signature'],
         ]
         x.append(features)
         y.append(labels)
@@ -74,6 +91,12 @@ def parse_data_multi_output(data, max):
 
     from sklearn.utils import shuffle
     x, y = shuffle(x, y)
+
+    return x, y
+
+
+def parse_data_single_output(data, mapToBool=False):
+    x, y = parse_data_single_output_full(data, mapToBool)
     x_train = x[:10000]
     y_train = y[:10000]
     x_hold_out = x[10000:]
@@ -82,7 +105,7 @@ def parse_data_multi_output(data, max):
     return x_train, y_train, x_hold_out, y_hold_out
 
 
-def parse_data_single_output(data, mapToBool=False):
+def parse_data_single_output_full(data, mapToBool=False):
     # Splitting data into inputs and labels
     x = []
     y = []
@@ -106,6 +129,13 @@ def parse_data_single_output(data, mapToBool=False):
             data[i]['instrumentalness'],
             data[i]['liveness'],
             data[i]['valence'],
+            # Optional
+            # data[i]['key'],
+            # data[i]['loudness'],
+            # data[i]['mode'],
+            # data[i]['tempo'],
+            # data[i]['duration_ms'],
+            # data[i]['time_signature'],
         ]
         x.append(features)
         y.append(labels)
@@ -117,12 +147,8 @@ def parse_data_single_output(data, mapToBool=False):
 
     from sklearn.utils import shuffle
     x, y = shuffle(x, y)
-    x_train = x[:10000]
-    y_train = y[:10000]
-    x_hold_out = x[10000:]
-    y_hold_out = y[10000:]
 
-    return x_train, y_train, x_hold_out, y_hold_out
+    return x, y
 
 
 # Map array of genres to True/False values for multi output models
@@ -137,3 +163,20 @@ def map_true_false(y):
                 song_list.append(False)
         mapped_y.append(song_list)
     return mapped_y
+
+
+def get_precision(tp, fp):
+    return tp / (tp + fp)
+
+
+def get_tpr(tp, fn):
+    if tp == 0 or fn == 0:
+        return 0
+    else:
+        return tp / (tp + fn)
+
+
+def get_f1(tp, fp, fn):
+    prec = get_precision(tp, fp)
+    tpr = get_tpr(tp, fn)
+    return 2 * prec * tpr / (prec + tpr)
