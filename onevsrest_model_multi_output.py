@@ -12,7 +12,7 @@ import matplotlib.pyplot as plt
 plt.rcdefaults()
 
 
-with open('./data/2k_songs_sample_dataset.json') as f:
+with open('./data/11k_songs_tso_dataset.json') as f:
     data = json.load(f)
 
 x, y, x_hold_out, y_hold_out = parse_data_multi_output(data, len(BASE_GENRES))

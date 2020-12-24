@@ -19,7 +19,7 @@ def map_to_genre_id(item):
     return genre_to_id(item[0])
 
 
-with open('./data/2k_songs_sample_dataset.json') as f:
+with open('./data/11k_songs_tso_dataset.json') as f:
     data = json.load(f)
 
 x, y, x_hold_out, y_hold_out = parse_data_single_output(data)
