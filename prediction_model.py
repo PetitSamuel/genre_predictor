@@ -2,7 +2,6 @@ import pandas as pd
 import numpy as np
 import json
 
-from sklearn import preprocessing
 from sklearn.metrics import roc_auc_score, confusion_matrix, plot_roc_curve, roc_curve
 from sklearn.pipeline import Pipeline
 from sklearn.neighbors import KNeighborsClassifier
@@ -14,8 +13,6 @@ from sklearn.multiclass import OneVsRestClassifier
 import matplotlib.pyplot as plt
 from util import BASE_GENRES, parse_data_multi_output, parse_data_single_output, map_true_false
 
-
-# Slightly simplified the problem to just picking the most likely genre given a set of features
 
 def main():
     plt.rc('font', size=14);
@@ -48,6 +45,146 @@ def main():
     # chain_of_classifiers_hold_out(x_hold_out, y_hold_out, best_model, max_genres)
 
     knn_multi_output(x_train, y_train)
+
+
+# Main function is the kNN multi-output model here
+def knn_multi_output(x, y):
+    from sklearn.model_selection import train_test_split
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.1)
+
+    from sklearn.multioutput import MultiOutputClassifier
+    clf = MultiOutputClassifier(KNeighborsClassifier(
+        n_neighbors=1)).fit(x_train, y_train)
+    y_pred = clf.predict(x_test)
+
+    for i in range(len(BASE_GENRES)):
+        auc = roc_auc_score(y_test[:, i], y_pred[:, i])
+        print("AUC %s: %.4f" % (BASE_GENRES[i], auc))
+
+    f1s = []
+    tprs = []
+    for genre in range(len(BASE_GENRES)):
+        TP = 0
+        FP = 0
+        TN = 0
+        FN = 0
+        genre = BASE_GENRES[genre]
+        for i in range(len(y_test)):
+            truth_genres = true_false_to_genres(y_test[i])
+            pred_genres = true_false_to_genres(y_pred[i])
+            if genre in truth_genres:
+                if genre in pred_genres:
+                    TP += 1
+                else:
+                    FN += 1
+            else:
+                if genre in pred_genres:
+                    FP += 1
+                else:
+                    TN += 1
+        print("Confusion Matrix of ", genre)
+        get_confusion_matrix(TP, FP, TN, FN)
+        f1s.append(get_f1(TP, FP, FN))
+        tprs.append(get_tpr(TP, FN))
+
+    print("av f1", np.array(f1s).mean())
+    print("av tpr", np.array(tprs).mean())
+
+
+# kNN Cross-Validation
+def knn_multi_output_cv(x, y):
+    n_neighbours = [1, 2, 3, 5]
+
+    for genre in range(len(BASE_GENRES)):
+        mean_auc = []
+        std_auc = []
+        for nn in n_neighbours:
+            from sklearn.multioutput import MultiOutputClassifier
+            clf = MultiOutputClassifier(KNeighborsClassifier(
+                n_neighbors=nn))
+
+            temp = []
+            from sklearn.model_selection import KFold
+            kf = KFold(n_splits=5)
+            for train, test in kf.split(x):
+                clf.fit(x[train], y[train])
+                y_pred = clf.predict(x[test])
+
+                auc = roc_auc_score(y[test][:, genre], y_pred[:, genre])
+                print(auc)
+                temp.append(auc)
+            mean_auc.append(np.array(temp).mean())
+            std_auc.append(np.array(temp).std())
+        plt.errorbar(n_neighbours, mean_auc, yerr=std_auc)
+        plt.title("Genre: %s #Neighbours vs Mean AUC with standard error" % BASE_GENRES[genre])
+        plt.xlabel("# Neighbours")
+        plt.ylabel("Mean AUC")
+        plt.show()
+
+
+def knn_cv_n_neighbours(x, y, neighbours):
+    mean_error = []
+    std_error = []
+
+    for neighbour in neighbours:
+        # kernel = create_gaussian_kernel(gamma)
+        from sklearn.neighbors import KNeighborsClassifier
+        model = KNeighborsClassifier(n_neighbors=neighbour)
+
+        temp = []
+        from sklearn.model_selection import KFold
+        kf = KFold(n_splits=10)
+        for train, test in kf.split(x):
+            model.fit(x[train], y[train])
+
+            score = model.score(x[test], y[test])
+            print(score)
+            temp.append(score)
+        mean_error.append(np.array(temp).mean())
+        std_error.append(np.array(temp).std())
+    plt.errorbar(neighbours, mean_error, yerr=std_error)
+    plt.title("#Neighbours vs Mean Accuracy with standard error")
+    plt.xlabel("# Neighbours")
+    plt.ylabel("Mean accuracy")
+    plt.show()
+
+
+def knn_cv_gamma(x, y, gammas):
+    mean_error = []
+    std_error = []
+
+    for g in gammas:
+        kernel = create_gaussian_kernel(g)
+        from sklearn.neighbors import KNeighborsClassifier
+        model = KNeighborsClassifier(n_neighbors=1, weights=kernel)
+
+        temp = []
+        from sklearn.model_selection import KFold
+        kf = KFold(n_splits=10)
+        for train, test in kf.split(x):
+            model.fit(x[train], y[train])
+
+            score = model.score(x[test], y[test])
+            print(score)
+            temp.append(score)
+        print(np.array(temp))
+        print("mean ", np.array(temp).mean())
+        mean_error.append(np.array(temp).mean())
+        std_error.append(np.array(temp).std())
+    print(mean_error)
+    print(std_error)
+    plt.errorbar(gammas, mean_error, yerr=std_error)
+    plt.title("gamma vs Mean Accuracy with standard error")
+    plt.xlabel("gamma")
+    plt.ylabel("Mean accuracy")
+    plt.show()
+
+
+def knn_hold_out(x, y, x_hold, y_hold):
+    from sklearn.neighbors import KNeighborsClassifier
+    model = KNeighborsClassifier(n_neighbors=1, weights="uniform")
+    model.fit(x, y.ravel())
+    print("hold-out score", model.score(x_hold, y_hold))
 
 
 # print a few predictions on the held out dataset
@@ -244,58 +381,6 @@ def create_gaussian_kernel(gamma):
     return g
 
 
-def knn_multi_output(x, y):
-    from sklearn.model_selection import train_test_split
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.1)
-
-    from sklearn.multioutput import MultiOutputClassifier
-    clf = MultiOutputClassifier(KNeighborsClassifier(
-        n_neighbors=1)).fit(x_train, y_train)
-    y_pred = clf.predict(x_test)
-
-    # for i in range(len(x_test)):
-    #     print("Actual: ", true_false_to_genres(y_test[i]))
-    #     print("Pred: ", true_false_to_genres(y_pred[i]))
-    #     print()
-
-    for i in range(len(BASE_GENRES)):
-        auc = roc_auc_score(y_test[:, i], y_pred[:, i])
-        print("AUC %s: %.4f" % (BASE_GENRES[i], auc))
-
-    # for i in range(len(BASE_GENRES)):
-    #     cm = confusion_matrix(y_test[:,i], y_pred[:,i])
-    #     print(BASE_GENRES[i] + "'s Confusion Matrix")
-    #     print(cm)
-    f1s = []
-    tprs = []
-    for genre in range(len(BASE_GENRES)):
-        TP = 0
-        FP = 0
-        TN = 0
-        FN = 0
-        genre = BASE_GENRES[genre]
-        for i in range(len(y_test)):
-            truth_genres = true_false_to_genres(y_test[i])
-            pred_genres = true_false_to_genres(y_pred[i])
-            if genre in truth_genres:
-                if genre in pred_genres:
-                    TP += 1
-                else:
-                    FN += 1
-            else:
-                if genre in pred_genres:
-                    FP += 1
-                else:
-                    TN += 1
-        print("Confusion Matrix of ", genre)
-        get_confusion_matrix(TP, FP, TN, FN)
-        f1s.append(get_f1(TP, FP, FN))
-        tprs.append(get_tpr(TP, FN))
-
-    print("av f1", np.array(f1s).mean())
-    print("av tpr", np.array(tprs).mean())
-
-
 def get_precision(tp, fp):
     return tp / (tp + fp)
 
@@ -316,101 +401,6 @@ def get_f1(tp, fp, fn):
 def get_confusion_matrix(tp, fp, tn, fn):
     print(tp, fp)
     print(fn, tn)
-
-
-def knn_multi_output_cv(x, y):
-    n_neighbours = [1, 2, 3, 5]
-
-    for genre in range(len(BASE_GENRES)):
-        mean_auc = []
-        std_auc = []
-        for nn in n_neighbours:
-            from sklearn.multioutput import MultiOutputClassifier
-            clf = MultiOutputClassifier(KNeighborsClassifier(
-                n_neighbors=nn))
-
-            temp = []
-            from sklearn.model_selection import KFold
-            kf = KFold(n_splits=5)
-            for train, test in kf.split(x):
-                clf.fit(x[train], y[train])
-                y_pred = clf.predict(x[test])
-
-                auc = roc_auc_score(y[test][:, genre], y_pred[:, genre])
-                print(auc)
-                temp.append(auc)
-            mean_auc.append(np.array(temp).mean())
-            std_auc.append(np.array(temp).std())
-        plt.errorbar(n_neighbours, mean_auc, yerr=std_auc)
-        plt.title("Genre: %s #Neighbours vs Mean AUC with standard error" % BASE_GENRES[genre])
-        plt.xlabel("# Neighbours")
-        plt.ylabel("Mean AUC")
-        plt.show()
-
-
-def knn_cv_n_neighbours(x, y, neighbours):
-    mean_error = []
-    std_error = []
-
-    for neighbour in neighbours:
-        # kernel = create_gaussian_kernel(gamma)
-        from sklearn.neighbors import KNeighborsClassifier
-        model = KNeighborsClassifier(n_neighbors=neighbour)
-
-        temp = []
-        from sklearn.model_selection import KFold
-        kf = KFold(n_splits=10)
-        for train, test in kf.split(x):
-            model.fit(x[train], y[train])
-
-            score = model.score(x[test], y[test])
-            print(score)
-            temp.append(score)
-        mean_error.append(np.array(temp).mean())
-        std_error.append(np.array(temp).std())
-    plt.errorbar(neighbours, mean_error, yerr=std_error)
-    plt.title("#Neighbours vs Mean Accuracy with standard error")
-    plt.xlabel("# Neighbours")
-    plt.ylabel("Mean accuracy")
-    plt.show()
-
-
-def knn_cv_gamma(x, y, gammas):
-    mean_error = []
-    std_error = []
-
-    for g in gammas:
-        kernel = create_gaussian_kernel(g)
-        from sklearn.neighbors import KNeighborsClassifier
-        model = KNeighborsClassifier(n_neighbors=1, weights=kernel)
-
-        temp = []
-        from sklearn.model_selection import KFold
-        kf = KFold(n_splits=10)
-        for train, test in kf.split(x):
-            model.fit(x[train], y[train])
-
-            score = model.score(x[test], y[test])
-            print(score)
-            temp.append(score)
-        print(np.array(temp))
-        print("mean ", np.array(temp).mean())
-        mean_error.append(np.array(temp).mean())
-        std_error.append(np.array(temp).std())
-    print(mean_error)
-    print(std_error)
-    plt.errorbar(gammas, mean_error, yerr=std_error)
-    plt.title("gamma vs Mean Accuracy with standard error")
-    plt.xlabel("gamma")
-    plt.ylabel("Mean accuracy")
-    plt.show()
-
-
-def knn_hold_out(x, y, x_hold, y_hold):
-    from sklearn.neighbors import KNeighborsClassifier
-    model = KNeighborsClassifier(n_neighbors=1, weights="uniform")
-    model.fit(x, y.ravel())
-    print("hold-out score", model.score(x_hold, y_hold))
 
 
 # knn network - number of neighbours cross validated
@@ -442,51 +432,6 @@ def knn(x, y):
     print(classification_report(y_pred, y_test))
 
     show_confusion_matrix(clf_knn, x_test, y_test)
-
-
-# random forest classifier
-# n_estimators chosen through cross validation - takes a while
-# so left at 200
-def random_forest(x, y):
-    from sklearn.model_selection import train_test_split
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
-
-    rf_pipeline = Pipeline([
-        ('rfor', RandomForestClassifier(random_state=42))
-    ])
-
-    # hyperparameters to train
-    rf_params = {'rfor__n_estimators': [200]}
-    clf_rf = GridSearchCV(rf_pipeline, rf_params)
-
-    # fit on the best hyperparameters
-    clf_rf.fit(x_train, y_train.ravel())
-
-    print("Best score: ", clf_rf.best_score_)
-    print("Best params: ", clf_rf.best_params_)
-
-    # classification test
-    y_pred = clf_rf.predict(x_test)
-    from sklearn.metrics import classification_report
-    print(classification_report(y_pred, y_test))
-
-    show_confusion_matrix(clf_rf, x_test, y_test)
-
-
-# haven't looked at hyperparameters for this yet
-def decision_tree(x, y):
-    from sklearn.model_selection import train_test_split
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2)
-
-    clf_dt = DecisionTreeClassifier(random_state=42, class_weight="balanced")
-    clf_dt.fit(x_train, y_train)
-
-    y_pred = clf_dt.predict(x_test)
-
-    from sklearn.metrics import classification_report
-    print(classification_report(y_pred, y_test))
-
-    show_confusion_matrix(clf_dt, x_test, y_test)
 
 
 def show_confusion_matrix(clf, x, y):
