@@ -1,5 +1,7 @@
 # Genre Predictor
 
+Check the PDF report for implementation details & details about peformance.
+
 ## Set Up
 
 ### Spotify API Access
